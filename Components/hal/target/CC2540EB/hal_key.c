@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -381,14 +381,25 @@ void HalKeyPoll (void)
 {
   uint8 keys = 0;
   uint8 notify = 0;
+  static uint8 LongPressCnt = 0, LongPressNotifyFlag = 0;
+  
 #if defined (CC2540_MINIDK)
-  if (!(HAL_KEY_SW_1_PORT & HAL_KEY_SW_1_BIT))    /* Key is active low */
+  if (!(HAL_KEY_SW_1_PORT & HAL_KEY_SW_1_BIT))    /* Key is active high */
   {
     keys |= HAL_KEY_SW_1;
   }
-  if (!(HAL_KEY_SW_2_PORT & HAL_KEY_SW_2_BIT))    /* Key is active low */
+  if (HAL_KEY_SW_2_PORT & HAL_KEY_SW_2_BIT)    /* Key is active high */
   {
     keys |= HAL_KEY_SW_2;
+    if( LongPressCnt < 0xff )
+    {
+      LongPressCnt++;
+    }
+  }
+  else
+  {
+    LongPressCnt = 0;
+    //LongPressNotifyFlag = 0;
   }
 #else
   if (!(HAL_KEY_SW_6_PORT & HAL_KEY_SW_6_BIT))    /* Key is active low */
@@ -409,12 +420,32 @@ void HalKeyPoll (void)
   {
     if (keys == halKeySavedKeys)
     {
-      /* Exit - since no keys have changed */
-      return;
+      if(( LongPressNotifyFlag == 0 ) && ( LongPressCnt >= 30 ))
+      {
+            notify = KEY_LONG_PREES;
+            LongPressNotifyFlag = 1;
+            keys |= KEY_LONG_PREES;
+      }
+      else
+      {
+          /* Exit - since no keys have changed */
+          return;
+      }
     }
     else
     {
-      notify = 1;
+        if( LongPressNotifyFlag == 0 )
+        {
+            if(!( keys & HAL_KEY_SW_2 ))
+            {
+                notify = 1;
+                keys |= KEY_CLICK;
+            }
+        }
+        else
+        {
+            LongPressNotifyFlag = 0;
+        }
     }
   }
   else
@@ -427,7 +458,7 @@ void HalKeyPoll (void)
   }
 
   /* Store the current keys for comparation next time */
-  halKeySavedKeys = keys;
+  halKeySavedKeys = keys & (~KEY_EVENT_MASK);
 
   /* Invoke Callback if new keys were depressed */
   if (notify && (pHalKeyProcessFunction))

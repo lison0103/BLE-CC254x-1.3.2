@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE, 
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -111,6 +111,9 @@ static gattCharCfg_t skConfig[GATT_MAX_NUM_CONN];
 // Key Pressed Characteristic User Description
 static uint8 skCharUserDesp[16] = "Key Press State\0";
 
+static uint8 CacheData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
+0x10 ,0x11 ,0x12 ,0x13 ,0x14 ,0x15 ,0x16 ,0x17 ,0x18 ,0x19}; 
+
 
 /*********************************************************************
  * Profile Attributes - Table
@@ -137,9 +140,9 @@ static gattAttribute_t simplekeysAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =
       // Characteristic Value- Key Pressed
       { 
         { ATT_BT_UUID_SIZE, keyPressedUUID },
+        GATT_PERMIT_READ, 
         0, 
-        0, 
-        &skKeyPressed 
+        CacheData 
       },
 
       // Characteristic configuration
@@ -232,21 +235,34 @@ bStatus_t SK_AddService( uint32 services )
  *
  * @return  bStatus_t
  */
+ 
 bStatus_t SK_SetParameter( uint8 param, uint8 len, void *pValue )
 {
   bStatus_t ret = SUCCESS;
+
+  
   switch ( param )
   {
     case SK_KEY_ATTR:
-      if ( len == sizeof ( uint8 ) ) 
+      if ( len == SK_SEND_DATA_LEN ) 
       {
-        skKeyPressed = *((uint8*)pValue);
+        //skKeyPressed = 0x33;//*((uint8*)pValue);
+
+		VOID osal_memcpy( CacheData, pValue, SK_SEND_DATA_LEN );
+        // See if Notification/Indication has been enabled
+        GATTServApp_ProcessCharCfg( skConfig, CacheData, FALSE, 
+                                    simplekeysAttrTbl, GATT_NUM_ATTRS( simplekeysAttrTbl ),
+                                    INVALID_TASK_ID );
+      }
+      else if ( len == sizeof ( uint8 ) ) 
+      {
+        skKeyPressed = 0x33;//*((uint8*)pValue);
         
         // See if Notification/Indication has been enabled
         GATTServApp_ProcessCharCfg( skConfig, &skKeyPressed, FALSE, 
                                     simplekeysAttrTbl, GATT_NUM_ATTRS( simplekeysAttrTbl ),
                                     INVALID_TASK_ID );
-      }
+      }  
       else
       {
         ret = bleInvalidRange;
@@ -328,8 +344,10 @@ static uint8 sk_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
       // simple keys characteristic does not have read permissions, but because it
       //   can be sent as a notification, it must be included here
       case SK_KEYPRESSED_UUID:
-        *pLen = 1;
-        pValue[0] = *pAttr->pValue;
+        *pLen = SK_SEND_DATA_LEN;
+        //pValue[0] = *pAttr->pValue;
+	    //pValue[1] = *(pAttr->pValue+1);
+	    VOID osal_memcpy( pValue, pAttr->pValue, SK_SEND_DATA_LEN );
         break;
 
       default:

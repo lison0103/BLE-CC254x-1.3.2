@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -218,6 +218,10 @@ static uint8 advertData[] =
 // GAP GATT Attributes
 static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "Simple BLE Peripheral";
 
+static uint8 BTSendData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
+0x10 ,0x11 ,0x12 ,0x13 ,0x14 ,0x15 ,0x16 ,0x17 ,0x18 ,0x19}; 
+
+
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -289,7 +293,7 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   {
     #if defined( CC2540_MINIDK )
       // For the CC2540DK-MINI keyfob, device doesn't start advertising until button is pressed
-      uint8 initial_advertising_enable = FALSE;
+      uint8 initial_advertising_enable = TRUE;
     #else
       // For other hardware platforms, device starts advertising upon initialization
       uint8 initial_advertising_enable = TRUE;
@@ -527,7 +531,7 @@ static void simpleBLEPeripheral_ProcessOSALMsg( osal_event_hdr_t *pMsg )
   #if defined( CC2540_MINIDK )
     case KEY_CHANGE:
       simpleBLEPeripheral_HandleKeys( ((keyChange_t *)pMsg)->state, ((keyChange_t *)pMsg)->keys );
-      break;
+      break;      
   #endif // #if defined( CC2540_MINIDK )
 
   default:
@@ -552,7 +556,7 @@ static void simpleBLEPeripheral_ProcessOSALMsg( osal_event_hdr_t *pMsg )
 static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
 {
   uint8 SK_Keys = 0;
-
+  
   VOID shift;  // Intentionally unreferenced parameter
 
   if ( keys & HAL_KEY_SW_1 )
@@ -560,14 +564,14 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
     SK_Keys |= SK_KEY_LEFT;
   }
 
-  if ( keys & HAL_KEY_SW_2 )
+  if ( keys & KEY_EVENT_MASK )
   {
 
     SK_Keys |= SK_KEY_RIGHT;
 
     // if device is not in a connection, pressing the right key should toggle
     // advertising on and off
-    if( gapProfileState != GAPROLE_CONNECTED )
+    /*if( gapProfileState != GAPROLE_CONNECTED )
     {
       uint8 current_adv_enabled_status;
       uint8 new_adv_enabled_status;
@@ -586,13 +590,30 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
 
       //change the GAP advertisement status to opposite of current status
       GAPRole_SetParameter( GAPROLE_ADVERT_ENABLED, sizeof( uint8 ), &new_adv_enabled_status );
-    }
+    }*/
+
+	switch(keys & KEY_EVENT_MASK )
+	{
+	   case KEY_CLICK:
+			BTSendData[0] = 0x01;
+			break;
+           case KEY_LONG_PREES:
+			BTSendData[0] = 0x02;
+			break;	   	
+	   case KEY_DOUBLE_CLICK:	
+			BTSendData[0] = 0x03;
+			break;	
+            default:
+              break;
+	}
+	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
 
   }
 
   // Set the value of the keys state to the Simple Keys Profile;
   // This will send out a notification of the keys state if enabled
-  SK_SetParameter( SK_KEY_ATTR, sizeof ( uint8 ), &SK_Keys );
+  //SK_SetParameter( SK_KEY_ATTR, sizeof ( uint8 ), &SK_Keys );
+  
 }
 #endif // #if defined( CC2540_MINIDK )
 

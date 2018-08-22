@@ -57,10 +57,12 @@ extern "C"
 #define SK_KEY_ATTR                   0  // RW uint8 - Profile Attribute value
  
 // SK Service UUID
-#define SK_SERV_UUID                  0xFFE0
+#define SK_SERV_UUID                  0x46DB
     
 // Key Pressed UUID
-#define SK_KEYPRESSED_UUID            0xFFE1
+#define SK_KEYPRESSED_UUID            0xAF2A
+
+#define SK_AUTHENTICATION_UUID        0xB3CD
 
 // Key Values
 #define SK_KEY_LEFT                   0x01

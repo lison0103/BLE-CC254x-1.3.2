@@ -59,7 +59,7 @@
  * CONSTANTS
  */
 
-#define SERVAPP_NUM_ATTR_SUPPORTED        5
+#define SERVAPP_NUM_ATTR_SUPPORTED        8
 
 /*********************************************************************
  * TYPEDEFS
@@ -74,11 +74,21 @@ CONST uint8 skServUUID[ATT_BT_UUID_SIZE] =
   LO_UINT16(SK_SERV_UUID), HI_UINT16(SK_SERV_UUID)
 };
 
-// Key Pressed UUID: 0x1801
+// Key Pressed UUID: 0xAF2A
 CONST uint8 keyPressedUUID[ATT_BT_UUID_SIZE] =
 { 
   LO_UINT16(SK_KEYPRESSED_UUID), HI_UINT16(SK_KEYPRESSED_UUID)
 };
+
+// Authentication UUID: 0xAF2A
+CONST uint8 AuthenticationUUID[ATT_BT_UUID_SIZE] =
+{ 
+  LO_UINT16(SK_AUTHENTICATION_UUID), HI_UINT16(SK_AUTHENTICATION_UUID)
+};
+
+
+
+
 
 /*********************************************************************
  * EXTERNAL VARIABLES
@@ -111,8 +121,20 @@ static gattCharCfg_t skConfig[GATT_MAX_NUM_CONN];
 // Key Pressed Characteristic User Description
 static uint8 skCharUserDesp[16] = "Key Press State\0";
 
-static uint8 CacheData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
+// Authentication Characteristic Properties
+static uint8 skAuthenticationCharProps = GATT_PROP_WRITE_NO_RSP | GATT_PROP_NOTIFY;
+
+
+// Authentication Characteristic User Description
+static uint8 skAuthenticationUserDesp[16] = "Authentication\0";
+
+
+static uint8 KeyPressData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
 0x10 ,0x11 ,0x12 ,0x13 ,0x14 ,0x15 ,0x16 ,0x17 ,0x18 ,0x19}; 
+
+static uint8 AuthenticationData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
+0x10 ,0x11 ,0x12 ,0x13 ,0x14 ,0x15 ,0x16 ,0x17 ,0x18 ,0x19}; 
+
 
 
 /*********************************************************************
@@ -129,6 +151,33 @@ static gattAttribute_t simplekeysAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =
     (uint8 *)&skService                       /* pValue */
   },
 
+
+    // Characteristic Declaration for Keys
+    { 
+      { ATT_BT_UUID_SIZE, characterUUID },
+      GATT_PERMIT_READ, 
+      0,
+      &skAuthenticationCharProps 
+    },
+
+      // Characteristic Value- Authentication
+      { 
+        { ATT_BT_UUID_SIZE, AuthenticationUUID },
+        GATT_PERMIT_READ, 
+        0, 
+        AuthenticationData 
+      },       
+
+      // Characteristic User Description
+      { 
+        { ATT_BT_UUID_SIZE, charUserDescUUID },
+        GATT_PERMIT_READ, 
+        0, 
+        skAuthenticationUserDesp 
+      },  
+
+    
+
     // Characteristic Declaration for Keys
     { 
       { ATT_BT_UUID_SIZE, characterUUID },
@@ -142,8 +191,8 @@ static gattAttribute_t simplekeysAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =
         { ATT_BT_UUID_SIZE, keyPressedUUID },
         GATT_PERMIT_READ, 
         0, 
-        CacheData 
-      },
+        KeyPressData 
+      },      
 
       // Characteristic configuration
       { 
@@ -215,7 +264,7 @@ bStatus_t SK_AddService( uint32 services )
     // Register GATT attribute list and CBs with GATT Server App
     status = GATTServApp_RegisterService( simplekeysAttrTbl, 
                                           GATT_NUM_ATTRS( simplekeysAttrTbl ),
-                                          &skCBs );
+                                          &skCBs ); 
   }
 
   return ( status );
@@ -248,9 +297,9 @@ bStatus_t SK_SetParameter( uint8 param, uint8 len, void *pValue )
       {
         //skKeyPressed = 0x33;//*((uint8*)pValue);
 
-		VOID osal_memcpy( CacheData, pValue, SK_SEND_DATA_LEN );
+		VOID osal_memcpy( KeyPressData, pValue, SK_SEND_DATA_LEN );
         // See if Notification/Indication has been enabled
-        GATTServApp_ProcessCharCfg( skConfig, CacheData, FALSE, 
+        GATTServApp_ProcessCharCfg( skConfig, KeyPressData, FALSE, 
                                     simplekeysAttrTbl, GATT_NUM_ATTRS( simplekeysAttrTbl ),
                                     INVALID_TASK_ID );
       }

@@ -182,6 +182,8 @@ static halKeyCBack_t pHalKeyProcessFunction;
 static uint8 HalKeyConfigured;
 bool Hal_KeyIntEnable;            /* interrupt enable/disable flag */
 
+uint8 Hal_KeyPressFlag = 0;
+
 /**************************************************************************************************
  *                                        FUNCTIONS - Local
  **************************************************************************************************/
@@ -382,6 +384,7 @@ void HalKeyPoll (void)
   uint8 keys = 0;
   uint8 notify = 0;
   static uint8 LongPressCnt = 0, LongPressNotifyFlag = 0;
+  static uint8 KeyPressCnt = 0, KeyPressFlag = 0;;
   
 #if defined (CC2540_MINIDK)
   if (!(HAL_KEY_SW_1_PORT & HAL_KEY_SW_1_BIT))    /* Key is active high */
@@ -420,12 +423,18 @@ void HalKeyPoll (void)
   {
     if (keys == halKeySavedKeys)
     {
+   
       if(( LongPressNotifyFlag == 0 ) && ( LongPressCnt >= 30 ))
       {
+            KeyPressFlag = 0;
             notify = KEY_LONG_PREES;
             LongPressNotifyFlag = 1;
             keys |= KEY_LONG_PREES;
       }
+      else if(( LongPressNotifyFlag == 0 ) && ( LongPressCnt >= 10 ))
+      {
+            KeyPressFlag = 1;
+      }         
       else
       {
           /* Exit - since no keys have changed */
@@ -439,7 +448,14 @@ void HalKeyPoll (void)
             if(!( keys & HAL_KEY_SW_2 ))
             {
                 notify = 1;
-                keys |= KEY_CLICK;
+                if( KeyPressFlag == 1 )
+                {
+                  keys |= KEY_CLICK;
+                }
+                else
+                {
+                  Hal_KeyPressFlag = 1;
+                }
             }
         }
         else
@@ -450,6 +466,19 @@ void HalKeyPoll (void)
   }
   else
   {
+    if( Hal_KeyPressFlag == 1 )
+    {
+        if( KeyPressCnt < 0xffu )
+        {
+            KeyPressCnt++;
+        }
+        if( KeyPressCnt >= 25 )
+        {
+          notify = 1;
+          Hal_KeyPressFlag = 0;
+          keys |= KEY_CLICK; 
+        }
+    }
     /* Key interrupt handled here */
     if (keys)
     {

@@ -1,1 +1,16 @@
 *.o
+*.dep
+Projects/ble/BloodPressure/CC2541DB/CC2541DK-MINI Keyfob Slave/
+Projects/ble/BloodPressure/CC2541DB/settings/
+Projects/ble/HostTestApp/CC2541/CC2541EM/
+Projects/ble/HostTestApp/CC2541/hex/
+Projects/ble/HostTestApp/CC2541/settings/
+Projects/ble/SimpleBLECentral/CC2541/CC2541EM/
+Projects/ble/SimpleBLECentral/CC2541/settings/
+Projects/ble/SimpleBLEPeripheral/CC2540DB/CC2540/
+Projects/ble/SimpleBLEPeripheral/CC2540DB/CC2540DK-MINI Keyfob/
+Projects/ble/SimpleBLEPeripheral/CC2540DB/settings/
+Projects/ble/SimpleBLEPeripheral/CC2541DB/CC2541/
+Projects/ble/SimpleBLEPeripheral/CC2541DB/CC2541DK-MINI Keyfob/
+Projects/ble/SimpleBLEPeripheral/CC2541DB/settings/
+

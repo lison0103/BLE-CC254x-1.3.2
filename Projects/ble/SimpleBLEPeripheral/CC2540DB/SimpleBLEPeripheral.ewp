@@ -1521,6 +1521,7 @@
           <state>$PROJ_DIR$\..\..\Profiles\Roles</state>
           <state>$PROJ_DIR$\..\..\Profiles\SimpleProfile</state>
           <state>$PROJ_DIR$\..\..\Profiles\DevInfo</state>
+          <state>$PROJ_DIR$\..\..\Profiles\Keys</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -8810,7 +8811,6 @@
     <file>
       <name>$PROJ_DIR$\..\..\Profiles\Keys\simplekeys.c</name>
       <excluded>
-        <configuration>CC2540</configuration>
         <configuration>CC2540F128</configuration>
         <configuration>CC2540-OAD-ImgA</configuration>
         <configuration>CC2540-OAD-ImgB</configuration>
@@ -8821,7 +8821,6 @@
     <file>
       <name>$PROJ_DIR$\..\..\Profiles\Keys\simplekeys.h</name>
       <excluded>
-        <configuration>CC2540</configuration>
         <configuration>CC2540F128</configuration>
         <configuration>CC2540-OAD-ImgA</configuration>
         <configuration>CC2540-OAD-ImgB</configuration>

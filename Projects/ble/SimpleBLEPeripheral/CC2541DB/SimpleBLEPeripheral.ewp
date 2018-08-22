@@ -1329,8 +1329,9 @@
           <state>HAL_DMA=TRUE</state>
           <state>POWER_SAVING</state>
           <state>xPLUS_BROADCASTER</state>
-          <state>HAL_LCD=TRUE</state>
+          <state>HAL_LCD=FALSE</state>
           <state>HAL_LED=FALSE</state>
+          <state>CC2540_MINIDK</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -1521,6 +1522,7 @@
           <state>$PROJ_DIR$\..\..\Profiles\Roles</state>
           <state>$PROJ_DIR$\..\..\Profiles\SimpleProfile</state>
           <state>$PROJ_DIR$\..\..\Profiles\DevInfo</state>
+          <state>$PROJ_DIR$\..\..\Profiles\Keys</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -6662,7 +6664,6 @@
     <file>
       <name>$PROJ_DIR$\..\..\Profiles\Keys\simplekeys.c</name>
       <excluded>
-        <configuration>CC2541</configuration>
         <configuration>CC2541-OAD-ImgA</configuration>
         <configuration>CC2541-OAD-ImgB</configuration>
         <configuration>CC2541-OAD-Encrypted-ImgA</configuration>
@@ -6672,7 +6673,6 @@
     <file>
       <name>$PROJ_DIR$\..\..\Profiles\Keys\simplekeys.h</name>
       <excluded>
-        <configuration>CC2541</configuration>
         <configuration>CC2541-OAD-ImgA</configuration>
         <configuration>CC2541-OAD-ImgB</configuration>
         <configuration>CC2541-OAD-Encrypted-ImgA</configuration>

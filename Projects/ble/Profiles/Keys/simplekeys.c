@@ -110,7 +110,7 @@ CONST uint8 AuthenticationUUID[ATT_BT_UUID_SIZE] =
 static CONST gattAttrType_t skService = { ATT_BT_UUID_SIZE, skServUUID };
 
 // Keys Pressed Characteristic Properties
-static uint8 skCharProps = GATT_PROP_NOTIFY;
+static uint8 skCharProps = GATT_PROP_READ | GATT_PROP_NOTIFY;
 
 // Key Pressed State Characteristic
 static uint8 skKeyPressed = 0;
@@ -122,15 +122,16 @@ static gattCharCfg_t skConfig[GATT_MAX_NUM_CONN];
 static uint8 skCharUserDesp[16] = "Key Press State\0";
 
 // Authentication Characteristic Properties
-static uint8 skAuthenticationCharProps = GATT_PROP_WRITE_NO_RSP | GATT_PROP_NOTIFY;
+static uint8 skAuthenticationCharProps = GATT_PROP_WRITE_NO_RSP;
 
 
 // Authentication Characteristic User Description
 static uint8 skAuthenticationUserDesp[16] = "Authentication\0";
 
 
-static uint8 KeyPressData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
-0x10 ,0x11 ,0x12 ,0x13 ,0x14 ,0x15 ,0x16 ,0x17 ,0x18 ,0x19}; 
+static uint8 KeyPressData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x01 ,
+0x00 ,0x00 ,0x00,
+0x10 ,0x11 }; 
 
 static uint8 AuthenticationData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
 0x10 ,0x11 ,0x12 ,0x13 ,0x14 ,0x15 ,0x16 ,0x17 ,0x18 ,0x19}; 

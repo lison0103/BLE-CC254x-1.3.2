@@ -79,6 +79,8 @@
   #include "oad_target.h"
 #endif
 
+#include "crc16.h"
+
 /*********************************************************************
  * MACROS
  */
@@ -218,8 +220,11 @@ static uint8 advertData[] =
 // GAP GATT Attributes
 static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "Simple BLE Peripheral";
 
-static uint8 BTSendData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
-0x10 ,0x11 ,0x12 ,0x13 ,0x14 ,0x15 ,0x16 ,0x17 ,0x18 ,0x19}; 
+static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x01 ,
+0x00 ,0x00 ,0x00,
+0x10 ,0x11 }; 
+
+static uint8 FRM_Counter[SK_KEY_NUM] = {0};
 
 
 /*********************************************************************
@@ -556,6 +561,7 @@ static void simpleBLEPeripheral_ProcessOSALMsg( osal_event_hdr_t *pMsg )
 static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
 {
   uint8 SK_Keys = 0;
+  uint16 crc = 0;
   
   VOID shift;  // Intentionally unreferenced parameter
 
@@ -592,21 +598,34 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
       GAPRole_SetParameter( GAPROLE_ADVERT_ENABLED, sizeof( uint8 ), &new_adv_enabled_status );
     }*/
 
+    BTSendData[7] = 0x01;
 	switch(keys & KEY_EVENT_MASK )
 	{
 	   case KEY_CLICK:
-			BTSendData[0] = 0x01;
+			BTSendData[8] = 0x01;
 			break;
-           case KEY_LONG_PREES:
-			BTSendData[0] = 0x02;
+           case KEY_DOUBLE_CLICK:
+			BTSendData[8] = 0x02;
 			break;	   	
-	   case KEY_DOUBLE_CLICK:	
-			BTSendData[0] = 0x03;
+	   case KEY_LONG_PREES:	
+			BTSendData[8] = 0x03;
 			break;	
             default:
               break;
 	}
+
+    // send 2 times, no respone
+    BTSendData[9] = FRM_Counter[0x01]++;
+    crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
+    BTSendData[SK_SEND_DATA_LEN-2] = (crc)&0xff; 
+    BTSendData[SK_SEND_DATA_LEN-1] = (crc >> 8)&0xff;
 	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
+    
+    BTSendData[9] = FRM_Counter[0x01]++;
+    crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
+    BTSendData[SK_SEND_DATA_LEN-2] = (crc)&0xff; 
+    BTSendData[SK_SEND_DATA_LEN-1] = (crc >> 8)&0xff;   
+    SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
 
   }
 

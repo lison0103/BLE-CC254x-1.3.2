@@ -72,7 +72,10 @@ extern "C"
 #define SK_SERVICE                    0x00000001
 
 // Send data lenth
-#define	SK_SEND_DATA_LEN			0x14
+#define	SK_SEND_DATA_LEN			0x0C
+
+// keys 
+#define SK_KEY_NUM                  0x01
 
 /*********************************************************************
  * TYPEDEFS

@@ -448,8 +448,13 @@ void HalKeyPoll (void)
             if(!( keys & HAL_KEY_SW_2 ))
             {
                 notify = 1;
-                if( KeyPressFlag == 1 )
+                if( KeyPressFlag == 2 )
                 {
+                   KeyPressFlag = 0;
+                }
+                else if( KeyPressFlag == 1 )
+                {
+                  KeyPressFlag = 0;
                   keys |= KEY_CLICK;
                 }
                 else
@@ -474,15 +479,23 @@ void HalKeyPoll (void)
         }
         if( KeyPressCnt >= 25 )
         {
-          notify = 1;
-          Hal_KeyPressFlag = 0;
-          keys |= KEY_CLICK; 
+              KeyPressCnt = 0;
+              notify = 1;
+              Hal_KeyPressFlag = 0;
+              keys |= KEY_CLICK; 
         }
     }
     /* Key interrupt handled here */
     if (keys)
     {
-      notify = 1;
+          notify = 1;
+          if( Hal_KeyPressFlag == 1 )
+          {
+              KeyPressCnt = 0;
+              Hal_KeyPressFlag = 0;
+              KeyPressFlag = 2;
+              keys |= KEY_DOUBLE_CLICK; 
+          }
     }
   }
 

@@ -113,33 +113,33 @@ void HalDriverInit (void)
 
   /* ADC */
 #if (defined HAL_ADC) && (HAL_ADC == TRUE)
-  HalAdcInit();
+//  HalAdcInit();
 #endif
 
   /* DMA */
 #if (defined HAL_DMA) && (HAL_DMA == TRUE)
   // Must be called before the init call to any module that uses DMA.
-  HalDmaInit();
+//  HalDmaInit();
 #endif
 
   /* AES */
 #if (defined HAL_AES) && (HAL_AES == TRUE)
-  HalAesInit();
+//  HalAesInit();
 #endif
 
   /* LCD */
 #if (defined HAL_LCD) && (HAL_LCD == TRUE)
-  HalLcdInit();
+//  HalLcdInit();
 #endif
 
   /* LED */
 #if (defined HAL_LED) && (HAL_LED == TRUE)
-  HalLedInit();
+//  HalLedInit();
 #endif
 
   /* UART */
 #if (defined HAL_UART) && (HAL_UART == TRUE)
-  HalUARTInit();
+  //HalUARTInit();
 #endif
 
   /* KEY */
@@ -149,7 +149,7 @@ void HalDriverInit (void)
 
   /* HID */
 #if (defined HAL_HID) && (HAL_HID == TRUE)
-  usbHidInit();
+//  usbHidInit();
 #endif
 }
 

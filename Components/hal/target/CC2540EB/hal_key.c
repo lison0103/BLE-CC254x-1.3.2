@@ -103,6 +103,51 @@
 #define HAL_KEY_CPU_PORT_2_IF P2IF
 
 #if defined ( CC2540_MINIDK )
+
+#if defined ( SWSK_CNT_BLE ) 
+/* SW_1 is at P0.3 */
+#define HAL_KEY_SW_1_PORT   P0
+#define HAL_KEY_SW_1_BIT    BV(3)
+#define HAL_KEY_SW_1_SEL    P0SEL
+#define HAL_KEY_SW_1_DIR    P0DIR
+
+/* SW_2 is at P0.4 */
+#define HAL_KEY_SW_2_PORT   P0
+#define HAL_KEY_SW_2_BIT    BV(4)
+#define HAL_KEY_SW_2_SEL    P0SEL
+#define HAL_KEY_SW_2_DIR    P0DIR
+
+/* SW_2 is at P0.5 */
+#define HAL_KEY_SW_3_PORT   P0
+#define HAL_KEY_SW_3_BIT    BV(5)
+#define HAL_KEY_SW_3_SEL    P0SEL
+#define HAL_KEY_SW_3_DIR    P0DIR
+
+
+#define HAL_KEY_SW_1_IEN      IEN1  /* CPU interrupt mask register */
+#define HAL_KEY_SW_1_ICTL     P0IEN /* Port Interrupt Control register */
+#define HAL_KEY_SW_1_ICTLBIT  BV(3) /* P0IEN - P0.0 enable/disable bit */
+#define HAL_KEY_SW_1_IENBIT   BV(5) /* Mask bit for all of Port_0 */
+#define HAL_KEY_SW_1_PXIFG    P0IFG /* Interrupt flag at source */
+
+#define HAL_KEY_SW_2_IEN      IEN1  /* CPU interrupt mask register */
+#define HAL_KEY_SW_2_ICTL     P0IEN /* Port Interrupt Control register */
+#define HAL_KEY_SW_2_ICTLBIT  BV(4) /* P0IEN - P0.1 enable/disable bit */
+#define HAL_KEY_SW_2_IENBIT   BV(5) /* Mask bit for all of Port_0 */
+#define HAL_KEY_SW_2_PXIFG    P0IFG /* Interrupt flag at source */
+
+#define HAL_KEY_SW_3_IEN      IEN1  /* CPU interrupt mask register */
+#define HAL_KEY_SW_3_ICTL     P0IEN /* Port Interrupt Control register */
+#define HAL_KEY_SW_3_ICTLBIT  BV(5) /* P0IEN - P0.1 enable/disable bit */
+#define HAL_KEY_SW_3_IENBIT   BV(5) /* Mask bit for all of Port_0 */
+#define HAL_KEY_SW_3_PXIFG    P0IFG /* Interrupt flag at source */
+
+
+#define HAL_KEY_SW_1_EDGEBIT  BV(0)
+
+
+
+#else
 /* SW_1 is at P0.0 */
 #define HAL_KEY_SW_1_PORT   P0
 #define HAL_KEY_SW_1_BIT    BV(0)
@@ -128,6 +173,7 @@
 #define HAL_KEY_SW_2_PXIFG    P0IFG /* Interrupt flag at source */
 
 #define HAL_KEY_SW_1_EDGEBIT  BV(0)
+#endif
 
 #else
 
@@ -215,6 +261,8 @@ void HalKeyInit( void )
   HAL_KEY_SW_1_DIR &= ~(HAL_KEY_SW_1_BIT);    /* Set pin direction to Input */
   HAL_KEY_SW_2_SEL &= ~(HAL_KEY_SW_2_BIT);    /* Set pin function to GPIO */
   HAL_KEY_SW_2_DIR &= ~(HAL_KEY_SW_2_BIT);    /* Set pin direction to Input */
+  HAL_KEY_SW_3_SEL &= ~(HAL_KEY_SW_3_BIT);    /* Set pin function to GPIO */
+  HAL_KEY_SW_3_DIR &= ~(HAL_KEY_SW_3_BIT);    /* Set pin direction to Input */
 #else
   HAL_KEY_SW_6_SEL &= ~(HAL_KEY_SW_6_BIT);    /* Set pin function to GPIO */
   HAL_KEY_SW_6_DIR &= ~(HAL_KEY_SW_6_BIT);    /* Set pin direction to Input */
@@ -263,6 +311,9 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
     HAL_KEY_SW_2_ICTL |= HAL_KEY_SW_2_ICTLBIT; /* enable interrupt generation at port */
     HAL_KEY_SW_2_IEN |= HAL_KEY_SW_2_IENBIT;   /* enable CPU interrupt */
     HAL_KEY_SW_2_PXIFG = ~(HAL_KEY_SW_2_BIT); /* Clear any pending interrupt */
+    HAL_KEY_SW_3_ICTL |= HAL_KEY_SW_3_ICTLBIT; /* enable interrupt generation at port */
+    HAL_KEY_SW_3_IEN |= HAL_KEY_SW_3_IENBIT;   /* enable CPU interrupt */
+    HAL_KEY_SW_3_PXIFG = ~(HAL_KEY_SW_3_BIT); /* Clear any pending interrupt */    
 
 #else
     /* Rising/Falling edge configuratinn */
@@ -316,6 +367,8 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
     HAL_KEY_SW_1_IEN &= ~(HAL_KEY_SW_1_IENBIT);   /* Clear interrupt enable bit */
     HAL_KEY_SW_2_ICTL &= ~(HAL_KEY_SW_2_ICTLBIT); /* don't generate interrupt */
     HAL_KEY_SW_2_IEN &= ~(HAL_KEY_SW_2_IENBIT);   /* Clear interrupt enable bit */
+    HAL_KEY_SW_3_ICTL &= ~(HAL_KEY_SW_3_ICTLBIT); /* don't generate interrupt */
+    HAL_KEY_SW_3_IEN &= ~(HAL_KEY_SW_3_IENBIT);   /* Clear interrupt enable bit */    
 #else
     HAL_KEY_SW_6_ICTL &= ~(HAL_KEY_SW_6_ICTLBIT); /* don't generate interrupt */
     HAL_KEY_SW_6_IEN &= ~(HAL_KEY_SW_6_IENBIT);   /* Clear interrupt enable bit */
@@ -351,6 +404,10 @@ uint8 HalKeyRead ( void )
   {
     keys |= HAL_KEY_SW_2;
   }
+  if (!(HAL_KEY_SW_3_PORT & HAL_KEY_SW_3_BIT))    /* Key is active low */
+  {
+    keys |= HAL_KEY_SW_3;
+  }  
 #else
 #ifdef HAL_BOARD_CC2530EB_REV17
   if ( (HAL_KEY_SW_6_PORT & HAL_KEY_SW_6_BIT))    /* Key is active high */
@@ -387,6 +444,30 @@ void HalKeyPoll (void)
   static uint8 KeyPressCnt = 0, KeyPressFlag = 0;;
   
 #if defined (CC2540_MINIDK)
+
+#if defined ( SWSK_CNT_BLE )  
+  if (!(HAL_KEY_SW_1_PORT & HAL_KEY_SW_1_BIT))    /* Key is active high */
+  {
+    keys |= HAL_KEY_SW_1;
+  }
+  if (!(HAL_KEY_SW_2_PORT & HAL_KEY_SW_2_BIT))    /* Key is active high */
+  {
+    keys |= HAL_KEY_SW_2;
+    if( LongPressCnt < 0xff )
+    {
+      LongPressCnt++;
+    }
+  }
+  else
+  {
+    LongPressCnt = 0;
+    //LongPressNotifyFlag = 0;
+  }
+  if (!(HAL_KEY_SW_3_PORT & HAL_KEY_SW_3_BIT))    /* Key is active high */
+  {
+    keys |= HAL_KEY_SW_3;
+  }  
+#else
   if (!(HAL_KEY_SW_1_PORT & HAL_KEY_SW_1_BIT))    /* Key is active high */
   {
     keys |= HAL_KEY_SW_1;
@@ -404,6 +485,8 @@ void HalKeyPoll (void)
     LongPressCnt = 0;
     //LongPressNotifyFlag = 0;
   }
+#endif  
+  
 #else
   if (!(HAL_KEY_SW_6_PORT & HAL_KEY_SW_6_BIT))    /* Key is active low */
   {
@@ -588,6 +671,12 @@ void halProcessKeyInterrupt (void)
     HAL_KEY_SW_2_PXIFG = ~(HAL_KEY_SW_2_BIT); /* Clear Interrupt Flag */
     valid = TRUE;
   }
+
+  if (HAL_KEY_SW_3_PXIFG & HAL_KEY_SW_3_BIT)  /* Interrupt Flag has been set by SW2 */
+  {
+    HAL_KEY_SW_3_PXIFG = ~(HAL_KEY_SW_3_BIT); /* Clear Interrupt Flag */
+    valid = TRUE;
+  }  
 #else
   if (HAL_KEY_SW_6_PXIFG & HAL_KEY_SW_6_BIT)  /* Interrupt Flag has been set */
   {
@@ -653,7 +742,8 @@ HAL_ISR_FUNCTION( halKeyPort0Isr, P0INT_VECTOR )
   HAL_ENTER_ISR();
 
 #if defined ( CC2540_MINIDK )
-  if ((HAL_KEY_SW_1_PXIFG & HAL_KEY_SW_1_BIT) || (HAL_KEY_SW_2_PXIFG & HAL_KEY_SW_2_BIT))
+  if ((HAL_KEY_SW_1_PXIFG & HAL_KEY_SW_1_BIT) || (HAL_KEY_SW_2_PXIFG & HAL_KEY_SW_2_BIT)
+    || (HAL_KEY_SW_3_PXIFG & HAL_KEY_SW_3_BIT))
 #else
   if (HAL_KEY_SW_6_PXIFG & HAL_KEY_SW_6_BIT)
 #endif
@@ -668,6 +758,7 @@ HAL_ISR_FUNCTION( halKeyPort0Isr, P0INT_VECTOR )
 #if defined ( CC2540_MINIDK )
   HAL_KEY_SW_1_PXIFG = 0;
   HAL_KEY_SW_2_PXIFG = 0;
+  HAL_KEY_SW_3_PXIFG = 0;
 #else
   HAL_KEY_SW_6_PXIFG = 0;
 #endif

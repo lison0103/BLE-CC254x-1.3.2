@@ -413,7 +413,10 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   // For keyfob board set GPIO pins into a power-optimized state
   // Note that there is still some leakage current from the buzzer,
   // accelerometer, LEDs, and buttons on the PCB.
-
+#if defined (SWSK_CNT_BLE)
+  P0DIR = 0xC7;    
+  P0 = 0x38;
+#else
   P0SEL = 0; // Configure Port 0 as GPIO
   P1SEL = 0; // Configure Port 1 as GPIO
   P2SEL = 0; // Configure Port 2 as GPIO
@@ -426,6 +429,7 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   P0 = 0x03; // All pins on port 0 to low except for P0.0 and P0.1 (buttons)
   P1 = 0;   // All pins on port 1 to low
   P2 = 0;   // All pins on port 2 to low
+#endif
 
 #endif // #if defined( CC2540_MINIDK )
 

@@ -426,6 +426,17 @@ uint8 HalKeyRead ( void )
   return keys;
 }
 
+#define SWSK_KEY_NUM    3
+typedef struct{
+
+    uint8 LongPressCnt;
+    uint8 LongPressNotifyFlag;
+    uint8 KeyPressCnt;
+    volatile uint8 KeyPressFlag;
+
+}Hal_Key;
+
+Hal_Key Swsk_Key[SWSK_KEY_NUM];
 
 /**************************************************************************************************
  * @fn      HalKeyPoll
@@ -440,8 +451,9 @@ void HalKeyPoll (void)
 {
   uint8 keys = 0;
   uint8 notify = 0;
-  static uint8 LongPressCnt = 0, LongPressNotifyFlag = 0;
-  static uint8 KeyPressCnt = 0, KeyPressFlag = 0;;
+  uint8 i = 0;
+  uint8 fault = 0;
+  uint8 key_Send = 0;
   
 #if defined (CC2540_MINIDK)
 
@@ -449,24 +461,48 @@ void HalKeyPoll (void)
   if (!(HAL_KEY_SW_1_PORT & HAL_KEY_SW_1_BIT))    /* Key is active high */
   {
     keys |= HAL_KEY_SW_1;
-  }
-  if (!(HAL_KEY_SW_2_PORT & HAL_KEY_SW_2_BIT))    /* Key is active high */
-  {
-    keys |= HAL_KEY_SW_2;
-    if( LongPressCnt < 0xff )
+    if( Swsk_Key[0].KeyPressFlag != 3 )
+    Swsk_Key[0].KeyPressFlag = 1;
+    if( Swsk_Key[0].LongPressCnt < 0xff )
     {
-      LongPressCnt++;
+        Swsk_Key[0].LongPressCnt++;
     }
   }
   else
   {
-    LongPressCnt = 0;
-    //LongPressNotifyFlag = 0;
+        Swsk_Key[0].LongPressCnt = 0;
   }
+  
+  if (!(HAL_KEY_SW_2_PORT & HAL_KEY_SW_2_BIT))    /* Key is active high */
+  {
+    keys |= HAL_KEY_SW_2;
+    if( Swsk_Key[1].KeyPressFlag != 3 )
+    Swsk_Key[1].KeyPressFlag = 1;
+    if( Swsk_Key[1].LongPressCnt < 0xff )
+    {
+        Swsk_Key[1].LongPressCnt++;
+    }
+  }
+  else
+  {
+        Swsk_Key[1].LongPressCnt = 0;
+  }
+
   if (!(HAL_KEY_SW_3_PORT & HAL_KEY_SW_3_BIT))    /* Key is active high */
   {
     keys |= HAL_KEY_SW_3;
-  }  
+    if( Swsk_Key[2].KeyPressFlag != 3 )
+    Swsk_Key[2].KeyPressFlag = 1;
+    if( Swsk_Key[2].LongPressCnt < 0xff )
+    {
+        Swsk_Key[2].LongPressCnt++;
+    }
+  }
+  else
+  {
+        Swsk_Key[2].LongPressCnt = 0;
+  }
+
 #else
   if (!(HAL_KEY_SW_1_PORT & HAL_KEY_SW_1_BIT))    /* Key is active high */
   {
@@ -506,89 +542,119 @@ void HalKeyPoll (void)
   {
     if (keys == halKeySavedKeys)
     {
-   
-      if(( LongPressNotifyFlag == 0 ) && ( LongPressCnt >= 30 ))
-      {
-            KeyPressFlag = 0;
-            notify = KEY_LONG_PREES;
-            LongPressNotifyFlag = 1;
-            keys |= KEY_LONG_PREES;
-      }
-      else if(( LongPressNotifyFlag == 0 ) && ( LongPressCnt >= 10 ))
-      {
-            KeyPressFlag = 1;
-      }         
-      else
-      {
-          /* Exit - since no keys have changed */
-          return;
-      }
+        for( i = 0; i < SWSK_KEY_NUM; i++ )
+        {
+            if(( Swsk_Key[i].LongPressNotifyFlag == 0 ) && ( Swsk_Key[i].LongPressCnt >= 30 ))
+            {
+                  Swsk_Key[i].KeyPressFlag = 0;
+                  notify = 1;
+                  Swsk_Key[i].LongPressNotifyFlag = 1;
+                  key_Send |= KEY_LONG_PREES;
+                  key_Send |= (1 << i);
+            }
+            else if(( Swsk_Key[i].LongPressNotifyFlag == 0 ) && ( Swsk_Key[i].LongPressCnt >= 10 ))
+            {
+                  Swsk_Key[i].KeyPressFlag = 2;
+            }         
+            else
+            {
+                /* Exit - since no keys have changed */
+                fault++;
+            }
+        }
+        if( fault >= 3 )
+        {
+            return;    
+        }
     }
     else
     {
-        if( LongPressNotifyFlag == 0 )
-        {
-            if(!( keys & HAL_KEY_SW_2 ))
-            {
-                notify = 1;
-                if( KeyPressFlag == 2 )
+        for( i = 0; i < SWSK_KEY_NUM; i++ )
+        {    
+            if( Swsk_Key[i].LongPressNotifyFlag == 0 )
+            {                 
+                if(!( keys & (HAL_KEY_SW_1 << i) ))
                 {
-                   KeyPressFlag = 0;
-                }
-                else if( KeyPressFlag == 1 )
-                {
-                  KeyPressFlag = 0;
-                  keys |= KEY_CLICK;
-                }
-                else
-                {
-                  Hal_KeyPressFlag = 1;
+                    notify = 1;                    
+                    if( Swsk_Key[i].KeyPressFlag == 3 )
+                    {
+                       Swsk_Key[i].KeyPressFlag = 0;
+                    }
+                    else if( Swsk_Key[i].KeyPressFlag == 2 )
+                    {
+                      Swsk_Key[i].KeyPressFlag = 0;
+                      key_Send |= KEY_CLICK;
+                      key_Send |= (1 << i);
+                    }
+                    else if( Swsk_Key[i].KeyPressFlag == 1 )
+                    {
+                      Swsk_Key[i].KeyPressFlag = 0;
+                      Hal_KeyPressFlag |= 1<<i;
+                    }
+                    else
+                    {
+                        Swsk_Key[i].KeyPressFlag = 0;
+                    }
                 }
             }
-        }
-        else
-        {
-            LongPressNotifyFlag = 0;
+            else
+            {
+                Swsk_Key[i].LongPressNotifyFlag = 0;
+            }
         }
     }
   }
   else
   {
-    if( Hal_KeyPressFlag == 1 )
-    {
-        if( KeyPressCnt < 0xffu )
-        {
-            KeyPressCnt++;
+        for( i = 0; i < SWSK_KEY_NUM; i++ )
+        {      
+            if( Hal_KeyPressFlag & ( 1 << i ) )
+            {
+                if( Swsk_Key[i].KeyPressCnt < 0xffu )
+                {
+                    Swsk_Key[i].KeyPressCnt++;
+                }
+                if( Swsk_Key[i].KeyPressCnt >= 25 )
+                {
+                      Swsk_Key[i].KeyPressCnt = 0;
+                      notify = 1;
+                      Hal_KeyPressFlag = 0;
+                      key_Send |= KEY_CLICK; 
+                      key_Send |= (1 << i);
+                }
+            }
+            /* Key interrupt handled here */
+            if (keys)
+            {
+                  notify = 1;
+                  if( Hal_KeyPressFlag & ( 1 << i ) )
+                  {
+                      Swsk_Key[i].KeyPressCnt = 0;
+                      Hal_KeyPressFlag &= ~(1<<i);
+                      Swsk_Key[i].KeyPressFlag = 3;
+                      key_Send |= KEY_DOUBLE_CLICK; 
+                      key_Send |= (1 << i);
+                  }
+            }
         }
-        if( KeyPressCnt >= 25 )
-        {
-              KeyPressCnt = 0;
-              notify = 1;
-              Hal_KeyPressFlag = 0;
-              keys |= KEY_CLICK; 
-        }
-    }
-    /* Key interrupt handled here */
-    if (keys)
-    {
-          notify = 1;
-          if( Hal_KeyPressFlag == 1 )
-          {
-              KeyPressCnt = 0;
-              Hal_KeyPressFlag = 0;
-              KeyPressFlag = 2;
-              keys |= KEY_DOUBLE_CLICK; 
-          }
-    }
   }
 
   /* Store the current keys for comparation next time */
   halKeySavedKeys = keys & (~KEY_EVENT_MASK);
 
+  if( keys & 0x07 )
+  {
+        key_Send |= 0x08;
+  }
+  else
+  {
+        key_Send &= ~0x08;
+  }
+
   /* Invoke Callback if new keys were depressed */
   if (notify && (pHalKeyProcessFunction))
   {
-    (pHalKeyProcessFunction) (keys, HAL_KEY_STATE_NORMAL);
+    (pHalKeyProcessFunction) (key_Send, HAL_KEY_STATE_NORMAL);
 
   }
 }

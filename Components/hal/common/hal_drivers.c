@@ -220,7 +220,7 @@ uint16 Hal_ProcessEvent( uint8 task_id, uint16 events )
     {
       osal_start_timerEx( Hal_TaskID, HAL_KEY_EVENT, 100);
     }
-    else if( Hal_KeyPressFlag == 1 )
+    else if( Hal_KeyPressFlag )
     {
       osal_start_timerEx( Hal_TaskID, HAL_KEY_EVENT, 20);
     }

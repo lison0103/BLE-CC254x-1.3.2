@@ -75,7 +75,7 @@ extern "C"
 #define	SK_SEND_DATA_LEN			0x0C
 
 // keys 
-#define SK_KEY_NUM                  0x01
+#define SWSK_KEY_NUM                  0x03
 
 /*********************************************************************
  * TYPEDEFS

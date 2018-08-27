@@ -239,11 +239,11 @@ static uint8 advertData[] =
 // GAP GATT Attributes
 static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "Simple BLE Peripheral";
 
-static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x01 ,
+static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x03 ,
 0x00 ,0x00 ,0x00,
 0x10 ,0x11 }; 
 
-static uint8 FRM_Counter[SK_KEY_NUM] = {0};
+static uint8 FRM_Counter[SWSK_KEY_NUM] = {0};
 
 
 /*********************************************************************
@@ -596,61 +596,51 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
 
   if ( keys & KEY_EVENT_MASK )
   {
-
-    SK_Keys |= SK_KEY_RIGHT;
-
-    // if device is not in a connection, pressing the right key should toggle
-    // advertising on and off
-    /*if( gapProfileState != GAPROLE_CONNECTED )
-    {
-      uint8 current_adv_enabled_status;
-      uint8 new_adv_enabled_status;
-
-      //Find the current GAP advertisement status
-      GAPRole_GetParameter( GAPROLE_ADVERT_ENABLED, &current_adv_enabled_status );
-
-      if( current_adv_enabled_status == FALSE )
-      {
-        new_adv_enabled_status = TRUE;
-      }
-      else
-      {
-        new_adv_enabled_status = FALSE;
-      }
-
-      //change the GAP advertisement status to opposite of current status
-      GAPRole_SetParameter( GAPROLE_ADVERT_ENABLED, sizeof( uint8 ), &new_adv_enabled_status );
-    }*/
-
-    BTSendData[7] = 0x01;
-	switch(keys & KEY_EVENT_MASK )
+	switch(keys & 0x07 )
 	{
-	   case KEY_CLICK:
-			BTSendData[8] = 0x01;
+	   case HAL_KEY_SW_1:
+			BTSendData[7] = 0x01;
 			break;
-           case KEY_DOUBLE_CLICK:
-			BTSendData[8] = 0x02;
+       case HAL_KEY_SW_2:
+			BTSendData[7] = 0x02;
 			break;	   	
-	   case KEY_LONG_PREES:	
-			BTSendData[8] = 0x03;
+	   case HAL_KEY_SW_3:	
+			BTSendData[7] = 0x03;
 			break;	
             default:
               break;
 	}
 
-    // send 2 times, no respone
-    BTSendData[9] = FRM_Counter[0x01]++;
+	switch(keys & KEY_EVENT_MASK )
+	{
+	   case KEY_CLICK:
+			BTSendData[8] = 0x01;
+            BTSendData[9] = FRM_Counter[0]++;
+			break;
+       case KEY_DOUBLE_CLICK:
+			BTSendData[8] = 0x02;
+            BTSendData[9] = FRM_Counter[1]++;
+			break;	   	
+	   case KEY_LONG_PREES:	
+			BTSendData[8] = 0x03;
+            BTSendData[9] = FRM_Counter[2]++;
+			break;	
+            default:
+              break;
+	}
+
+    // send 1 times, no respone
     crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
     BTSendData[SK_SEND_DATA_LEN-2] = (crc)&0xff; 
     BTSendData[SK_SEND_DATA_LEN-1] = (crc >> 8)&0xff;
 	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
-    
+ /*   
     BTSendData[9] = FRM_Counter[0x01]++;
     crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
     BTSendData[SK_SEND_DATA_LEN-2] = (crc)&0xff; 
     BTSendData[SK_SEND_DATA_LEN-1] = (crc >> 8)&0xff;   
     SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
-
+*/
   }
 
   // Set the value of the keys state to the Simple Keys Profile;

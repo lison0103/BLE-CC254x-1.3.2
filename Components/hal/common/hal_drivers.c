@@ -134,7 +134,7 @@ void HalDriverInit (void)
 
   /* LED */
 #if (defined HAL_LED) && (HAL_LED == TRUE)
-//  HalLedInit();
+  HalLedInit();
 #endif
 
   /* UART */

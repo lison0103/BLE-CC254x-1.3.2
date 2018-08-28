@@ -1330,8 +1330,9 @@
           <state>POWER_SAVING</state>
           <state>xPLUS_BROADCASTER</state>
           <state>HAL_LCD=FALSE</state>
-          <state>HAL_LED=FALSE</state>
+          <state>HAL_LED=TRUE</state>
           <state>CC2540_MINIDK</state>
+          <state>BLINK_LEDS</state>
           <state>SWSK_CNT_BLE</state>
         </option>
         <option>

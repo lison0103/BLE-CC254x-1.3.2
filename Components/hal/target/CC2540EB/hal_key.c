@@ -614,7 +614,7 @@ void HalKeyPoll (void)
                 {
                     Swsk_Key[i].KeyPressCnt++;
                 }
-                if( Swsk_Key[i].KeyPressCnt >= 25 )
+                if( Swsk_Key[i].KeyPressCnt >= 10 )
                 {
                       Swsk_Key[i].KeyPressCnt = 0;
                       notify = 1;

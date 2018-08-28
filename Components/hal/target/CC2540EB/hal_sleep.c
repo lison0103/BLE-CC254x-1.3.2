@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -366,7 +366,7 @@ void halSleep( uint32 osal_timeout )
       HAL_TURN_OFF_LED3();
 #else
       // use this to turn LEDs off during sleep
-      HalLedEnterSleep();
+      //HalLedEnterSleep();
 #endif // HAL_SLEEP_DEBUG_LED
 
       // enable sleep timer interrupt
@@ -436,7 +436,7 @@ void halSleep( uint32 osal_timeout )
       HAL_TURN_ON_LED3();
 #else //!HAL_SLEEP_DEBUG_LED
       // use this to turn LEDs back on after sleep
-      HalLedExitSleep();
+      //HalLedExitSleep();
 #endif // HAL_SLEEP_DEBUG_LED
 
 #if ((defined HAL_KEY) && (HAL_KEY == TRUE))

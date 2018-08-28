@@ -105,13 +105,13 @@
 #endif  // defined ( CC2540_MINIDK )
 
 // Minimum connection interval (units of 1.25ms, 80=100ms) if automatic parameter update request is enabled
-#define DEFAULT_DESIRED_MIN_CONN_INTERVAL     40 //50ms
+#define DEFAULT_DESIRED_MIN_CONN_INTERVAL     20 //25ms
 
 // Maximum connection interval (units of 1.25ms, 800=1000ms) if automatic parameter update request is enabled
-#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     800
+#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     100//125ms
 
 // Slave latency to use if automatic parameter update request is enabled
-#define DEFAULT_DESIRED_SLAVE_LATENCY         19
+#define DEFAULT_DESIRED_SLAVE_LATENCY         4
 
 // Supervision timeout value (units of 10ms, 1000=10s) if automatic parameter update request is enabled
 #define DEFAULT_DESIRED_CONN_TIMEOUT          300 //3s
@@ -245,6 +245,11 @@ static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00
 
 static uint8 FRM_Counter[SWSK_KEY_NUM] = {0};
 
+uint8 initial_advertising_enable = TRUE;
+
+uint8 ble_state = 0;
+
+
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -317,10 +322,10 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   {
     #if defined( CC2540_MINIDK )
       // For the CC2540DK-MINI keyfob, device doesn't start advertising until button is pressed
-      uint8 initial_advertising_enable = TRUE;
+      initial_advertising_enable = FALSE;
     #else
       // For other hardware platforms, device starts advertising upon initialization
-      uint8 initial_advertising_enable = TRUE;
+      initial_advertising_enable = TRUE;
     #endif
 
     // By setting this to zero, the device will go into the waiting state after
@@ -360,6 +365,10 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
     GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MIN, advInt );
     GAP_SetParamValue( TGAP_GEN_DISC_ADV_INT_MAX, advInt );
   }
+
+//修改limit模式下的广播时间
+  #define tgap_lim_adv_timeout 60   //60秒
+  GAP_SetParamValue(TGAP_LIM_ADV_TIMEOUT, tgap_lim_adv_timeout);   
 
   // Setup the GAP Bond Manager
   {
@@ -465,6 +474,8 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   // Setup a delayed profile startup
   osal_set_event( simpleBLEPeripheral_TaskID, SBP_START_DEVICE_EVT );
 
+  //osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, SBP_PERIODIC_EVT_PERIOD );
+
 }
 
 /*********************************************************************
@@ -507,8 +518,8 @@ uint16 SimpleBLEPeripheral_ProcessEvent( uint8 task_id, uint16 events )
     VOID GAPRole_StartDevice( &simpleBLEPeripheral_PeripheralCBs );
 
     // Start Bond Manager
-    VOID GAPBondMgr_Register( &simpleBLEPeripheral_BondMgrCBs );
-
+    VOID GAPBondMgr_Register( &simpleBLEPeripheral_BondMgrCBs );    
+    
     // Set timer for first periodic event
     osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, SBP_PERIODIC_EVT_PERIOD );
 
@@ -517,10 +528,15 @@ uint16 SimpleBLEPeripheral_ProcessEvent( uint8 task_id, uint16 events )
 
   if ( events & SBP_PERIODIC_EVT )
   {
+    if( ble_state == GAPROLE_ADVERTISING )
+    {  
+        HalLedBlink(HAL_LED_1,255,10,1000);
+    }
+    
     // Restart timer
     if ( SBP_PERIODIC_EVT_PERIOD )
     {
-      osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, SBP_PERIODIC_EVT_PERIOD );
+      //osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, SBP_PERIODIC_EVT_PERIOD );
     }
 
     // Perform periodic application task
@@ -624,6 +640,20 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
 	   case KEY_LONG_PREES:	
 			BTSendData[8] = 0x03;
             BTSendData[9] = FRM_Counter[2]++;
+            if( ble_state != GAPROLE_CONNECTED )
+            {
+                initial_advertising_enable ^= 0x01;
+                GAPRole_SetParameter( GAPROLE_ADVERT_ENABLED, sizeof( uint8 ), &initial_advertising_enable );
+                if( initial_advertising_enable )
+                    {
+                        HalLedBlink(HAL_LED_2,255,10,1000);
+                        osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );
+                    }
+                else
+                    {
+                        HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
+                    }
+            }    
 			break;	
             default:
               break;
@@ -661,6 +691,7 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
  */
 static void peripheralStateNotificationCB( gaprole_States_t newState )
 {
+    ble_state = newState;
   switch ( newState )
   {
     case GAPROLE_STARTED:
@@ -699,6 +730,8 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
         #if (defined HAL_LCD) && (HAL_LCD == TRUE)
           HalLcdWriteString( "Advertising",  HAL_LCD_LINE_3 );
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
+          HalLedBlink(HAL_LED_2,255,10,1000);
+          osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );          
       }
       break;
 
@@ -707,6 +740,8 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
         #if (defined HAL_LCD) && (HAL_LCD == TRUE)
           HalLcdWriteString( "Connected",  HAL_LCD_LINE_3 );
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
+          HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
+          HalLedBlink(HAL_LED_1,255,3,3100);
       }
       break;
 
@@ -715,6 +750,9 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
         #if (defined HAL_LCD) && (HAL_LCD == TRUE)
           HalLcdWriteString( "Disconnected",  HAL_LCD_LINE_3 );
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
+          
+          HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
+          initial_advertising_enable = FALSE;
       }
       break;
 

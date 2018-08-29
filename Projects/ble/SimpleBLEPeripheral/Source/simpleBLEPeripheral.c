@@ -237,7 +237,7 @@ static uint8 advertData[] =
 };
 
 // GAP GATT Attributes
-static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "Simple BLE Peripheral";
+static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE";//"Simple BLE Peripheral";
 
 static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x03 ,
 0x00 ,0x00 ,0x00,
@@ -731,6 +731,7 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           HalLcdWriteString( "Advertising",  HAL_LCD_LINE_3 );
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
           HalLedBlink(HAL_LED_2,255,10,1000);
+          initial_advertising_enable = TRUE;
           osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );          
       }
       break;

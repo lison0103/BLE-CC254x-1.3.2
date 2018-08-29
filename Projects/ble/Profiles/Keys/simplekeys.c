@@ -51,6 +51,9 @@
 
 #include "simplekeys.h"
 
+#include "crc16.h"
+
+
 /*********************************************************************
  * MACROS
  */
@@ -122,7 +125,7 @@ static gattCharCfg_t skConfig[GATT_MAX_NUM_CONN];
 static uint8 skCharUserDesp[16] = "Key Press State\0";
 
 // Authentication Characteristic Properties
-static uint8 skAuthenticationCharProps = GATT_PROP_WRITE_NO_RSP;
+static uint8 skAuthenticationCharProps = GATT_PROP_READ |  GATT_PROP_WRITE;
 
 
 // Authentication Characteristic User Description
@@ -133,8 +136,9 @@ static uint8 KeyPressData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x
 0x00 ,0x00 ,0x00,
 0x10 ,0x11 }; 
 
-static uint8 AuthenticationData[20] = { 0x00 ,0x01 ,0x02 ,0x03 ,0x04 ,0x05 ,0x06 ,0x07 ,0x08 ,0x09,
-0x10 ,0x11 ,0x12 ,0x13 ,0x14 ,0x15 ,0x16 ,0x17 ,0x18 ,0x19}; 
+static uint8 AuthenticationData[SK_AUTHENTICATION_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0F ,0x00 ,0x01 ,
+0x01 ,0x02 ,0x03, 0x04 ,0x05 ,0x06 ,
+0x13 ,0x14 }; 
 
 
 
@@ -164,7 +168,7 @@ static gattAttribute_t simplekeysAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =
       // Characteristic Value- Authentication
       { 
         { ATT_BT_UUID_SIZE, AuthenticationUUID },
-        GATT_PERMIT_READ, 
+        GATT_PERMIT_READ | GATT_PERMIT_WRITE, 
         0, 
         AuthenticationData 
       },       
@@ -400,6 +404,11 @@ static uint8 sk_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
 	    VOID osal_memcpy( pValue, pAttr->pValue, SK_SEND_DATA_LEN );
         break;
 
+      case SK_AUTHENTICATION_UUID:
+        *pLen = SK_AUTHENTICATION_DATA_LEN;
+	    VOID osal_memcpy( pValue, pAttr->pValue, SK_AUTHENTICATION_DATA_LEN );
+        break;         
+
       default:
         // Should never get here!
         *pLen = 0;
@@ -434,6 +443,7 @@ static bStatus_t sk_WriteAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
                                  uint8 *pValue, uint8 len, uint16 offset )
 {
   bStatus_t status = SUCCESS;
+  uint16 crc = 0;
 
   if ( pAttr->type.len == ATT_BT_UUID_SIZE )
   {
@@ -445,6 +455,23 @@ static bStatus_t sk_WriteAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
         status = GATTServApp_ProcessCCCWriteReq( connHandle, pAttr, pValue, len,
                                                  offset, GATT_CLIENT_CFG_NOTIFY );
         break;
+
+      case SK_AUTHENTICATION_UUID:
+
+        if( len == SK_AUTHENTICATION_DATA_LEN )
+        {
+	        VOID osal_memcpy( pAttr->pValue, pValue, SK_AUTHENTICATION_DATA_LEN );
+
+            AuthenticationData[1] = 0x03;
+            AuthenticationData[2] = 0x02;
+
+            crc = Crc16Calculate(AuthenticationData,SK_AUTHENTICATION_DATA_LEN-2);
+            AuthenticationData[SK_AUTHENTICATION_DATA_LEN-2] = (crc)&0xff; 
+            AuthenticationData[SK_AUTHENTICATION_DATA_LEN-1] = (crc >> 8)&0xff;
+
+            VOID osal_memcpy( pValue, pAttr->pValue, SK_AUTHENTICATION_DATA_LEN );
+        }    
+        break;        
        
       default:
         // Should never get here!

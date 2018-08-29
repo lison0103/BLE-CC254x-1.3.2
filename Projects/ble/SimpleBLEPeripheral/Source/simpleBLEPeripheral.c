@@ -532,6 +532,12 @@ uint16 SimpleBLEPeripheral_ProcessEvent( uint8 task_id, uint16 events )
     {  
         HalLedBlink(HAL_LED_1,255,10,1000);
     }
+    else if( ble_state == GAPROLE_CONNECTED )
+    {
+        HalLedBlink(HAL_LED_1,1,3,3100);
+        osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 3100 );
+    }
+    else{}
     
     // Restart timer
     if ( SBP_PERIODIC_EVT_PERIOD )
@@ -742,7 +748,8 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           HalLcdWriteString( "Connected",  HAL_LCD_LINE_3 );
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
           HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
-          HalLedBlink(HAL_LED_1,255,3,3100);
+          HalLedBlink(HAL_LED_1,1,3,3100);
+          osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 3100 );
       }
       break;
 
@@ -754,6 +761,7 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           
           HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
           initial_advertising_enable = FALSE;
+          osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
       }
       break;
 

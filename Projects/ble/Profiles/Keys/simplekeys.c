@@ -256,7 +256,13 @@ CONST gattServiceCBs_t skCBs =
 bStatus_t SK_AddService( uint32 services )
 {
   uint8 status = SUCCESS;
+  uint8 i = 0;
 
+  for( i = 0; i < SK_SEND_DATA_LEN; i++ )
+  {
+        KeyPressData[i] = 0;
+  }
+  
   // Initialize Client Characteristic Configuration attributes
   GATTServApp_InitCharCfg( INVALID_CONNHANDLE, skConfig );
 
@@ -379,6 +385,7 @@ static uint8 sk_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
                             uint8 *pValue, uint8 *pLen, uint16 offset, uint8 maxLen )
 {
   bStatus_t status = SUCCESS;
+  uint8 i = 0;
  
   // Make sure it's not a blob operation (no attributes in the profile are long
   if ( offset > 0 )
@@ -402,6 +409,10 @@ static uint8 sk_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
         //pValue[0] = *pAttr->pValue;
 	    //pValue[1] = *(pAttr->pValue+1);
 	    VOID osal_memcpy( pValue, pAttr->pValue, SK_SEND_DATA_LEN );
+          for( i = 0; i < SK_SEND_DATA_LEN; i++ )
+          {
+                KeyPressData[i] = 0;
+          }      
         break;
 
       case SK_AUTHENTICATION_UUID:

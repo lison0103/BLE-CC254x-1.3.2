@@ -243,7 +243,7 @@ static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00
 0x00 ,0x00 ,0x00,
 0x10 ,0x11 }; 
 
-static uint8 FRM_Counter[SWSK_KEY_NUM] = {0};
+static uint8 FRM_Counter[SWSK_KEY_NUM] = {0,0,0};
 
 uint8 initial_advertising_enable = TRUE;
 
@@ -616,60 +616,105 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
     SK_Keys |= SK_KEY_LEFT;
   }
 
-  if ( keys & KEY_EVENT_MASK )
-  {
-	switch(keys & 0x07 )
-	{
-	   case HAL_KEY_SW_1:
-			BTSendData[7] = 0x01;
-			break;
-       case HAL_KEY_SW_2:
-			BTSendData[7] = 0x02;
-			break;	   	
-	   case HAL_KEY_SW_3:	
-			BTSendData[7] = 0x03;
-			break;	
-            default:
-              break;
-	}
 
-	switch(keys & KEY_EVENT_MASK )
+  if (( keys & 0x07 ) && ( keys & KEY_EVENT_MASK ))
+  {
+
+  	switch(keys & KEY_EVENT_MASK )
 	{
-	   case KEY_CLICK:
-			BTSendData[8] = 0x01;
-            BTSendData[9] = FRM_Counter[0]++;
-			break;
-       case KEY_DOUBLE_CLICK:
-			BTSendData[8] = 0x02;
-            BTSendData[9] = FRM_Counter[1]++;
-			break;	   	
-	   case KEY_LONG_PREES:	
-			BTSendData[8] = 0x03;
-            BTSendData[9] = FRM_Counter[2]++;
-            if( ble_state != GAPROLE_CONNECTED )
-            {
+            case KEY_CLICK:
+              BTSendData[8] = 0x01;
+              break;
+            case KEY_DOUBLE_CLICK:
+              BTSendData[8] = 0x02;
+              break;	   	
+            case KEY_LONG_PREES:	
+              BTSendData[8] = 0x03;
+              if( ble_state != GAPROLE_CONNECTED )
+              {
                 initial_advertising_enable ^= 0x01;
                 GAPRole_SetParameter( GAPROLE_ADVERT_ENABLED, sizeof( uint8 ), &initial_advertising_enable );
                 if( initial_advertising_enable )
-                    {
-                        HalLedBlink(HAL_LED_2,255,10,1000);
-                        osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );
-                    }
+                {
+                  HalLedBlink(HAL_LED_2,255,10,1000);
+                  osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );
+                }
                 else
-                    {
-                        HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
-                    }
-            }    
-			break;	
+                {
+                  HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
+                }
+              }    
+              break;	
             default:
               break;
 	}
 
-    // send 1 times, no respone
-    crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
-    BTSendData[SK_SEND_DATA_LEN-2] = (crc)&0xff; 
-    BTSendData[SK_SEND_DATA_LEN-1] = (crc >> 8)&0xff;
+
+    if( ble_state == GAPROLE_CONNECTED )
+    {
+        BTSendData[0] = 0xAA;
+        BTSendData[1] = 0x03;
+        BTSendData[2] = 0x02;
+        BTSendData[3] = 0x00;
+        BTSendData[4] = 0x0C;
+        BTSendData[5] = 0x00;
+        BTSendData[6] = 0x03;
+        BTSendData[7] = 0x00;
+        //BTSendData[8] = 0x00;
+        BTSendData[9] = 0x00;
+        BTSendData[10] = 0x00;
+        BTSendData[11] = 0x00;
+        
+        switch(keys & 0x07 )
+        {
+            case HAL_KEY_SW_1:
+              BTSendData[7] = 0x01;
+              if( FRM_Counter[0] < 0xff )
+              {
+                BTSendData[9] = ++FRM_Counter[0];
+              }
+              else
+              {
+                FRM_Counter[0] = 1;
+                BTSendData[9] = FRM_Counter[0];
+              }
+              break;
+            case HAL_KEY_SW_2:
+              BTSendData[7] = 0x02;
+              if( FRM_Counter[1] < 0xff )
+              {
+                BTSendData[9] = ++FRM_Counter[1];
+              }
+              else
+              {
+                FRM_Counter[1] = 1;
+                BTSendData[9] = FRM_Counter[1];
+              }
+              break;      
+            case HAL_KEY_SW_3:   
+              BTSendData[7] = 0x03;
+              if( FRM_Counter[2] < 0xff )
+              {
+                BTSendData[9] = ++FRM_Counter[2];
+              }
+              else
+              {
+                FRM_Counter[2] = 1;
+                BTSendData[9] = FRM_Counter[2];
+              }
+              break;  
+            default:
+              break;
+        }
+
+    
+        // send 1 times, no respone
+        crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
+        BTSendData[SK_SEND_DATA_LEN-2] = (crc)&0xff; 
+        BTSendData[SK_SEND_DATA_LEN-1] = (crc >> 8)&0xff;
+    
 	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
+    }
  /*   
     BTSendData[9] = FRM_Counter[0x01]++;
     crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
@@ -697,6 +742,8 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
  */
 static void peripheralStateNotificationCB( gaprole_States_t newState )
 {
+    uint8 i = 0;
+    
     ble_state = newState;
   switch ( newState )
   {
@@ -728,6 +775,14 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           HalLcdWriteString( bdAddr2Str( ownAddress ),  HAL_LCD_LINE_2 );
           HalLcdWriteString( "Initialized",  HAL_LCD_LINE_3 );
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
+          for( i = 0; i < SWSK_KEY_NUM; i++ )
+          {
+                FRM_Counter[i] = 0;
+          }  
+          for( i = 0; i < SK_SEND_DATA_LEN; i++ )
+          {
+                BTSendData[i] = 0;
+          }
       }
       break;
 
@@ -762,6 +817,14 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
           initial_advertising_enable = FALSE;
           osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
+          for( i = 0; i < SWSK_KEY_NUM; i++ )
+          {
+                FRM_Counter[i] = 0;
+          }
+          for( i = 0; i < SK_SEND_DATA_LEN; i++ )
+          {
+                BTSendData[i] = 0;
+          }          
       }
       break;
 

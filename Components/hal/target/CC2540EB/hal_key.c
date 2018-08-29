@@ -96,7 +96,7 @@
 #define HAL_KEY_RISING_EDGE   0
 #define HAL_KEY_FALLING_EDGE  1
 
-#define HAL_KEY_DEBOUNCE_VALUE  25
+#define HAL_KEY_DEBOUNCE_VALUE  20
 
 /* CPU port interrupt */
 #define HAL_KEY_CPU_PORT_0_IF P0IF
@@ -618,7 +618,7 @@ void HalKeyPoll (void)
                 {
                       Swsk_Key[i].KeyPressCnt = 0;
                       notify = 1;
-                      Hal_KeyPressFlag = 0;
+                      Hal_KeyPressFlag &= ~(1<<i);
                       key_Send |= KEY_CLICK; 
                       key_Send |= (1 << i);
                 }

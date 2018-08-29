@@ -123,6 +123,31 @@ void HalLedInit (void)
   HalLedStatusControl.sleepActive = FALSE;  // Initialize sleepActive to FALSE.
 #endif
 #endif
+
+/* charge detect */
+#if (HAL_CHARGER == TRUE)
+
+#define HAL_CHARGER_DET_PORT   P0
+#define HAL_CHARGER_DET_BIT    BV(2)
+#define HAL_CHARGER_DET_SEL    P0SEL
+#define HAL_CHARGER_DET_DIR    P0DIR
+
+    uint8 charging = 0;
+    
+    HAL_CHARGER_DET_SEL &= ~(HAL_CHARGER_DET_BIT);    /* Set pin function to GPIO */
+    HAL_CHARGER_DET_DIR &= ~(HAL_CHARGER_DET_BIT);    /* Set pin direction to Input */
+    
+    if (!(HAL_CHARGER_DET_PORT & HAL_CHARGER_DET_BIT))    /* low is charging */
+    {
+      charging = 1;
+    }
+    else
+    {
+      charging = 0;
+    }
+
+#endif
+
 }
 
 /***************************************************************************************************

@@ -574,20 +574,22 @@ void HalKeyPoll (void)
             if( Swsk_Key[i].LongPressNotifyFlag == 0 )
             {                 
                 if(!( keys & (HAL_KEY_SW_1 << i) ))
-                {
-                    notify = 1;                    
+                {                                       
                     if( Swsk_Key[i].KeyPressFlag == 3 )
                     {
+                       notify = 1;
                        Swsk_Key[i].KeyPressFlag = 0;
                     }
                     else if( Swsk_Key[i].KeyPressFlag == 2 )
                     {
+                      notify = 1;
                       Swsk_Key[i].KeyPressFlag = 0;
                       key_Send |= KEY_CLICK;
                       key_Send |= (1 << i);
                     }
                     else if( Swsk_Key[i].KeyPressFlag == 1 )
                     {
+                      notify = 1;
                       Swsk_Key[i].KeyPressFlag = 0;
                       Hal_KeyPressFlag |= 1<<i;
                     }
@@ -599,7 +601,10 @@ void HalKeyPoll (void)
             }
             else
             {
+                notify = 1;
+                Swsk_Key[i].KeyPressFlag = 0;
                 Swsk_Key[i].LongPressNotifyFlag = 0;
+                break;
             }
         }
     }

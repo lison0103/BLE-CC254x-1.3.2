@@ -259,6 +259,19 @@ static void peripheralStateNotificationCB( gaprole_States_t newState );
 static void performPeriodicTask( void );
 static void simpleProfileChangeCB( uint8 paramID );
 
+// Application states
+enum
+{
+  BLE_STATE_IDLE,
+  BLE_STATE_CONNECTED,
+};
+// Application state
+static uint8 simpleBLEState = BLE_STATE_IDLE;
+//ghostyu bond
+static uint8 gPairStatus=0;
+void ProcessPasscodeCB(uint8 *deviceAddr,uint16 connectionHandle,uint8 uiInputs,uint8 uiOutputs );
+static void ProcessPairStateCB( uint16 connHandle, uint8 state, uint8 status );
+
 #if defined( CC2540_MINIDK )
 static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys );
 #endif
@@ -283,8 +296,8 @@ static gapRolesCBs_t simpleBLEPeripheral_PeripheralCBs =
 // GAP Bond Manager Callbacks
 static gapBondCBs_t simpleBLEPeripheral_BondMgrCBs =
 {
-  NULL,                     // Passcode callback (not used by application)
-  NULL                      // Pairing / Bonding state Callback (not used by application)
+  ProcessPasscodeCB,                     
+  ProcessPairStateCB                      
 };
 
 // Simple GATT Profile Callbacks
@@ -374,8 +387,9 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   {
     uint32 passkey = 0; // passkey "000000"
     uint8 pairMode = GAPBOND_PAIRING_MODE_WAIT_FOR_REQ;
+    //uint8 pairMode = GAPBOND_PAIRING_MODE_INITIATE;
     uint8 mitm = TRUE;
-    uint8 ioCap = GAPBOND_IO_CAP_DISPLAY_ONLY;
+    uint8 ioCap = GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT;
     uint8 bonding = TRUE;
     GAPBondMgr_SetParameter( GAPBOND_DEFAULT_PASSCODE, sizeof ( uint32 ), &passkey );
     GAPBondMgr_SetParameter( GAPBOND_PAIRING_MODE, sizeof ( uint8 ), &pairMode );
@@ -971,5 +985,64 @@ char *bdAddr2Str( uint8 *pAddr )
 }
 #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
 
+
+static void ProcessPasscodeCB(uint8 *deviceAddr,uint16 connectionHandle,uint8 uiInputs,uint8 uiOutputs )
+{
+  uint32  passcode;
+  uint8   str[7];
+
+  // Create random passcode
+  LL_Rand( ((uint8 *) &passcode), sizeof( uint32 ));
+  passcode %= 1000000;
+
+  // Display passcode to user
+  if ( uiOutputs != 0 )
+  {
+    //HalLcdWriteString( "Passcode:",  HAL_LCD_LINE_1 );
+    //HalLcdWriteString( (char *) _ltoa(passcode, str, 10),  HAL_LCD_LINE_2 );
+  }
+  
+  // Send passcode response
+  GAPBondMgr_PasscodeRsp( connectionHandle, SUCCESS, passcode );
+}
+
+
+static void ProcessPairStateCB( uint16 connHandle, uint8 state, uint8 status )
+{
+  if ( state == GAPBOND_PAIRING_STATE_STARTED )
+  {
+    //HalLcdWriteString( "Pairing started", HAL_LCD_LINE_1 );
+	gPairStatus = 0;
+  }
+  else if ( state == GAPBOND_PAIRING_STATE_COMPLETE )
+  {
+    if ( status == SUCCESS )
+    {
+      //HalLcdWriteString( "Pairing success", HAL_LCD_LINE_1 );
+	  gPairStatus = 1;
+    }
+    else
+    {
+      //HalLcdWriteStringValue( "Pairing fail", status, 10, HAL_LCD_LINE_1 );
+	  if(status ==8){
+		gPairStatus = 1;
+	  }else{
+		gPairStatus = 0;
+	  }
+    }
+
+	if(simpleBLEState == BLE_STATE_CONNECTED && gPairStatus !=1){
+	  GAPRole_TerminateConnection();
+    }
+  }
+  else if ( state == GAPBOND_PAIRING_STATE_BONDED )
+  {
+    if ( status == SUCCESS )
+    {
+      //HalLcdWriteString( "Bonding success", HAL_LCD_LINE_1 );
+    }
+  }
+
+}
 /*********************************************************************
 *********************************************************************/

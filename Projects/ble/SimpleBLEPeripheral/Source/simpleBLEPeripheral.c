@@ -436,23 +436,40 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   // For keyfob board set GPIO pins into a power-optimized state
   // Note that there is still some leakage current from the buzzer,
   // accelerometer, LEDs, and buttons on the PCB.
+
 #if defined (SWSK_CNT_BLE)
-  P0DIR = 0xC7;    
-  P0 = 0x38;
+
+  P0SEL = 0; // Configure Port 0 as GPIO
+  P1SEL = 0; // Configure Port 1 as GPIO
+  P2SEL = 0; // Configure Port 2 as GPIO
+
+  P0DIR = 0xC0;//0xC7;    
+  P0 = 0x3F;//0x38;
+  P0INP = 0x00;// 设置P0上下拉
+  P2INP = 0x00;//设置P0上拉
+
+  P1DIR = 0xFF; // All port 1 pins (P1.0-P1.7) as output
+  P2DIR = 0x1F; // All port 1 pins (P2.0-P2.4) as output
+
+  P1 = 0x80;   // All pins on port 1 to low
+  P2 = 0x01;   // All pins on port 2 to low  
+  
 #else
+
   P0SEL = 0; // Configure Port 0 as GPIO
   P1SEL = 0; // Configure Port 1 as GPIO
   P2SEL = 0; // Configure Port 2 as GPIO
 
   P0DIR = 0xFC; // Port 0 pins P0.0 and P0.1 as input (buttons),
+  P0 = 0x03; // All pins on port 0 to low except for P0.0 and P0.1 (buttons)
                 // all others (P0.2-P0.7) as output
   P1DIR = 0xFF; // All port 1 pins (P1.0-P1.7) as output
   P2DIR = 0x1F; // All port 1 pins (P2.0-P2.4) as output
 
-  P0 = 0x03; // All pins on port 0 to low except for P0.0 and P0.1 (buttons)
   P1 = 0;   // All pins on port 1 to low
   P2 = 0;   // All pins on port 2 to low
 #endif
+
 
 #endif // #if defined( CC2540_MINIDK )
 
@@ -656,6 +673,7 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
                 else
                 {
                   HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
+                  osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
                 }
               }    
               break;	

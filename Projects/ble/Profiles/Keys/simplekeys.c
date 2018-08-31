@@ -125,7 +125,7 @@ static gattCharCfg_t skConfig[GATT_MAX_NUM_CONN];
 static uint8 skCharUserDesp[16] = "Key Press State\0";
 
 // Authentication Characteristic Properties
-static uint8 skAuthenticationCharProps = GATT_PROP_READ |  GATT_PROP_WRITE;
+static uint8 skAuthenticationCharProps = GATT_PROP_WRITE_NO_RSP;
 
 
 // Authentication Characteristic User Description
@@ -133,7 +133,7 @@ static uint8 skAuthenticationUserDesp[16] = "Authentication\0";
 
 
 static uint8 KeyPressData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x01 ,
-0x00 ,0x00 ,0x00,
+0x00 ,0x00 ,0x00, 0x00 ,0x00 ,0x00,
 0x10 ,0x11 }; 
 
 static uint8 AuthenticationData[SK_AUTHENTICATION_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0F ,0x00 ,0x01 ,
@@ -168,7 +168,7 @@ static gattAttribute_t simplekeysAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =
       // Characteristic Value- Authentication
       { 
         { ATT_BT_UUID_SIZE, AuthenticationUUID },
-        GATT_PERMIT_READ | GATT_PERMIT_WRITE, 
+        GATT_PERMIT_WRITE, 
         0, 
         AuthenticationData 
       },       
@@ -313,7 +313,7 @@ bStatus_t SK_SetParameter( uint8 param, uint8 len, void *pValue )
         GATTServApp_ProcessCharCfg( skConfig, KeyPressData, FALSE, 
                                     simplekeysAttrTbl, GATT_NUM_ATTRS( simplekeysAttrTbl ),
                                     INVALID_TASK_ID );
-      }
+      }     
       else if ( len == sizeof ( uint8 ) ) 
       {
         skKeyPressed = 0x33;//*((uint8*)pValue);
@@ -405,10 +405,8 @@ static uint8 sk_ReadAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
       // simple keys characteristic does not have read permissions, but because it
       //   can be sent as a notification, it must be included here
       case SK_KEYPRESSED_UUID:
-        *pLen = SK_SEND_DATA_LEN;
-        //pValue[0] = *pAttr->pValue;
-	    //pValue[1] = *(pAttr->pValue+1);
-	    VOID osal_memcpy( pValue, pAttr->pValue, SK_SEND_DATA_LEN );
+          *pLen = SK_SEND_DATA_LEN;
+	   VOID osal_memcpy( pValue, pAttr->pValue, SK_SEND_DATA_LEN );
           for( i = 0; i < SK_SEND_DATA_LEN; i++ )
           {
                 KeyPressData[i] = 0;
@@ -471,16 +469,21 @@ static bStatus_t sk_WriteAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
 
         if( len == SK_AUTHENTICATION_DATA_LEN )
         {
-	        VOID osal_memcpy( pAttr->pValue, pValue, SK_AUTHENTICATION_DATA_LEN );
+	    VOID osal_memcpy( pAttr->pValue, pValue, SK_AUTHENTICATION_DATA_LEN );
 
-            AuthenticationData[1] = 0x03;
-            AuthenticationData[2] = 0x02;
-
-            crc = Crc16Calculate(AuthenticationData,SK_AUTHENTICATION_DATA_LEN-2);
-            AuthenticationData[SK_AUTHENTICATION_DATA_LEN-2] = (crc)&0xff; 
-            AuthenticationData[SK_AUTHENTICATION_DATA_LEN-1] = (crc >> 8)&0xff;
-
-            VOID osal_memcpy( pValue, pAttr->pValue, SK_AUTHENTICATION_DATA_LEN );
+            crc = Crc16Calculate(AuthenticationData,SK_AUTHENTICATION_DATA_LEN);
+            if(!crc)
+            {
+                AuthenticationData[1] = 0x03;
+                AuthenticationData[2] = 0x02;
+    
+                crc = Crc16Calculate(AuthenticationData,SK_AUTHENTICATION_DATA_LEN-2);
+                AuthenticationData[SK_AUTHENTICATION_DATA_LEN-2] = (crc >> 8)&0xff; 
+                AuthenticationData[SK_AUTHENTICATION_DATA_LEN-1] = (crc)&0xff;
+    
+                VOID osal_memcpy( KeyPressData, pAttr->pValue, SK_SEND_DATA_LEN );
+                SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, KeyPressData );
+            }
         }    
         break;        
        

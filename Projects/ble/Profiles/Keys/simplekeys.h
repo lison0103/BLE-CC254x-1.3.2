@@ -72,7 +72,7 @@ extern "C"
 #define SK_SERVICE                    0x00000001
 
 // Send data lenth
-#define	SK_SEND_DATA_LEN			0x0C
+#define	SK_SEND_DATA_LEN			0x0F
 #define SK_AUTHENTICATION_DATA_LEN  0x0F
 
 // keys 

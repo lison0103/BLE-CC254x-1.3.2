@@ -162,7 +162,7 @@ static uint8 scanRspData[] =
 {
 #if 1
   // complete name
-  0x0d,   // length of this data
+  0x12,   // length of this data
   GAP_ADTYPE_LOCAL_NAME_COMPLETE,
   0x53,   // 'S'
   0x57,   // 'W'
@@ -176,7 +176,12 @@ static uint8 scanRspData[] =
   0x42,   // 'B'
   0x4c,   // 'L'
   0x45,   // 'E'
-
+  0x2D,   // '-'
+  0x56,   // 'V'
+  0x30,   // '0' 
+  0x2E,   // '.'  
+  0x31,   // '1' 
+  
 #else
   // complete name
   0x14,   // length of this data
@@ -237,10 +242,10 @@ static uint8 advertData[] =
 };
 
 // GAP GATT Attributes
-static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE";//"Simple BLE Peripheral";
+static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.1";//"Simple BLE Peripheral";
 
 static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x03 ,
-0x00 ,0x00 ,0x00,
+0x00 ,0x00 ,0x00, 0x00 ,0x00 ,0x00,
 0x10 ,0x11 }; 
 
 static uint8 FRM_Counter[SWSK_KEY_NUM] = {0,0,0};
@@ -741,9 +746,9 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
 
     
         // send 1 times, no respone
-        crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
-        BTSendData[SK_SEND_DATA_LEN-2] = (crc)&0xff; 
-        BTSendData[SK_SEND_DATA_LEN-1] = (crc >> 8)&0xff;
+        crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-5);
+        BTSendData[SK_SEND_DATA_LEN-5] = (crc >> 8)&0xff; 
+        BTSendData[SK_SEND_DATA_LEN-4] = (crc)&0xff;
     
 	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
     }

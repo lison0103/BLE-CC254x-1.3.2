@@ -384,7 +384,8 @@ void HalKeyPoll (void)
   uint8 keys = 0;
   uint8 notify = 0;
   static uint8 LongPressCnt = 0, LongPressNotifyFlag = 0;
-  static uint8 KeyPressCnt = 0, KeyPressFlag = 0;;
+  static uint8 KeyPressCnt = 0, KeyPressFlag = 0;
+  uint8 key_event = 0;
   
 #if defined (CC2540_MINIDK)
   if (!(HAL_KEY_SW_1_PORT & HAL_KEY_SW_1_BIT))    /* Key is active high */
@@ -430,6 +431,7 @@ void HalKeyPoll (void)
             notify = KEY_LONG_PREES;
             LongPressNotifyFlag = 1;
             keys |= KEY_LONG_PREES;
+            key_event |= KEY_LONG_PREES;
       }
       else if(( LongPressNotifyFlag == 0 ) && ( LongPressCnt >= 10 ))
       {
@@ -456,6 +458,7 @@ void HalKeyPoll (void)
                 {
                   KeyPressFlag = 0;
                   keys |= KEY_CLICK;
+                  key_event |= KEY_CLICK;
                 }
                 else
                 {
@@ -483,6 +486,7 @@ void HalKeyPoll (void)
               notify = 1;
               Hal_KeyPressFlag = 0;
               keys |= KEY_CLICK; 
+              key_event |= KEY_CLICK;
         }
     }
     /* Key interrupt handled here */
@@ -495,6 +499,7 @@ void HalKeyPoll (void)
               Hal_KeyPressFlag = 0;
               KeyPressFlag = 2;
               keys |= KEY_DOUBLE_CLICK; 
+              key_event |= KEY_DOUBLE_CLICK;
           }
     }
   }
@@ -505,7 +510,7 @@ void HalKeyPoll (void)
   /* Invoke Callback if new keys were depressed */
   if (notify && (pHalKeyProcessFunction))
   {
-    (pHalKeyProcessFunction) (keys, HAL_KEY_STATE_NORMAL);
+    (pHalKeyProcessFunction) (keys, key_event);
 
   }
 }

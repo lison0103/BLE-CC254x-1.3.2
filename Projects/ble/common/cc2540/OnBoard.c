@@ -249,13 +249,13 @@ uint8 OnBoard_SendKeys( uint8 keys, uint8 state )
 void OnBoard_KeyCallback ( uint8 keys, uint8 state )
 {
   uint8 shift;
-  (void)state;
+  //(void)state;
 
   // shift key (S1) is used to generate key interrupt
   // applications should not use S1 when key interrupt is enabled
-  shift = (OnboardKeyIntEnable == HAL_KEY_INTERRUPT_ENABLE) ? false : ((keys & HAL_KEY_SW_6) ? true : false);
+  //shift = (OnboardKeyIntEnable == HAL_KEY_INTERRUPT_ENABLE) ? false : ((keys & HAL_KEY_SW_6) ? true : false);
 
-  if ( OnBoard_SendKeys( keys, shift ) != SUCCESS )
+  if ( OnBoard_SendKeys( keys, state ) != SUCCESS )
   {
     // Process SW1 here
     if ( keys & HAL_KEY_SW_1 )  // Switch 1

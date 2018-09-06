@@ -583,14 +583,14 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
   uint8 SK_Keys = 0;
   uint16 crc = 0;
   
-  VOID shift;  // Intentionally unreferenced parameter
+  //VOID shift;  // Intentionally unreferenced parameter
 
   if ( keys & HAL_KEY_SW_1 )
   {
     SK_Keys |= SK_KEY_LEFT;
   }
 
-  if ( keys & KEY_EVENT_MASK )
+  if ( keys && shift )
   {
 
     SK_Keys |= SK_KEY_RIGHT;
@@ -619,7 +619,7 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
     }*/
 
     BTSendData[7] = 0x01;
-	switch(keys & KEY_EVENT_MASK )
+	switch(shift & KEY_EVENT_MASK )
 	{
 	   case KEY_CLICK:
 			BTSendData[8] = 0x01;

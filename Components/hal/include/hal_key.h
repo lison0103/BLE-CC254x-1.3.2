@@ -75,6 +75,11 @@ extern "C"
 #define HAL_KEY_SW_5 0x10  
 #define HAL_KEY_SW_6 0x20  
 
+#define HAL_KEY_PRESS_NONE               0x00  
+#define HAL_KEY_PRESSING                 0x01
+#define HAL_KEY_PRESS_TIME_1000MS        0x02
+#define HAL_KEY_PRESS_WAIT_FOR_RELEASE   0x03  
+
 #else
 
 #define HAL_KEY_SW_1 0x01  // Joystick up

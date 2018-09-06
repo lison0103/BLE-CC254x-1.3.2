@@ -119,7 +119,7 @@ void HalDriverInit (void)
   /* DMA */
 #if (defined HAL_DMA) && (HAL_DMA == TRUE)
   // Must be called before the init call to any module that uses DMA.
-//  HalDmaInit();
+  HalDmaInit();
 #endif
 
   /* AES */

@@ -62,7 +62,7 @@
  * CONSTANTS
  */
 
-#define SERVAPP_NUM_ATTR_SUPPORTED        8
+#define SERVAPP_NUM_ATTR_SUPPORTED        7
 
 /*********************************************************************
  * TYPEDEFS
@@ -198,7 +198,7 @@ static gattAttribute_t simplekeysAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =
         0, 
         KeyPressData 
       },      
-
+/*
       // Characteristic configuration
       { 
         { ATT_BT_UUID_SIZE, clientCharCfgUUID },
@@ -206,7 +206,7 @@ static gattAttribute_t simplekeysAttrTbl[SERVAPP_NUM_ATTR_SUPPORTED] =
         0, 
         (uint8 *)skConfig 
       },
-
+*/
       // Characteristic User Description
       { 
         { ATT_BT_UUID_SIZE, charUserDescUUID },

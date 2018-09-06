@@ -672,8 +672,8 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
                 GAPRole_SetParameter( GAPROLE_ADVERT_ENABLED, sizeof( uint8 ), &initial_advertising_enable );
                 if( initial_advertising_enable )
                 {
-                  HalLedBlink(HAL_LED_2,255,10,1000);
-                  osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );
+                  //HalLedBlink(HAL_LED_2,255,10,1000);
+                  //osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );
                 }
                 else
                 {
@@ -830,6 +830,7 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
           HalLedBlink(HAL_LED_2,255,10,1000);
           initial_advertising_enable = TRUE;
+          osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
           osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );          
       }
       break;
@@ -841,6 +842,7 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
           HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
           HalLedBlink(HAL_LED_1,1,3,3100);
+          osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
           osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 3100 );
       }
       break;

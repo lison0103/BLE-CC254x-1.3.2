@@ -131,6 +131,7 @@ typedef uint32  uint24;
 #define KEY_LONG_PREES                0x10    // Key Events
 #define KEY_CLICK                0x20    // Key Events
 #define KEY_DOUBLE_CLICK                0x40    // Key Events
+#define KEY_LONG_PREES_CONTINUOUS                0x80    // Key Events
 
 
 

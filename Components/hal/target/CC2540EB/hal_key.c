@@ -544,14 +544,24 @@ void HalKeyPoll (void)
     {
         for( i = 0; i < SWSK_KEY_NUM; i++ )
         {
-            /* key Long press Time >= 3s */
-            if(( Swsk_Key[i].LongPressNotifyFlag == 0 ) && ( Swsk_Key[i].LongPressCnt >= 30 ))
+            /* key Long press, every 200ms send one time */
+            if(( Swsk_Key[i].LongPressNotifyFlag == 1 ) && ( Swsk_Key[i].LongPressCnt >= 2 ))
+            {
+                  Swsk_Key[i].KeyPressFlag = HAL_KEY_PRESS_NONE;
+                  notify = 1;
+                  key_Send |= KEY_LONG_PREES_CONTINUOUS;
+                  key_Send |= (1 << i);
+                  Swsk_Key[i].LongPressCnt = 0;            
+            }
+            /* key Long press Time >= 2s */
+            else if(( Swsk_Key[i].LongPressNotifyFlag == 0 ) && ( Swsk_Key[i].LongPressCnt >= 20 ))
             {
                   Swsk_Key[i].KeyPressFlag = HAL_KEY_PRESS_NONE;
                   notify = 1;
                   Swsk_Key[i].LongPressNotifyFlag = 1;
                   key_Send |= KEY_LONG_PREES;
                   key_Send |= (1 << i);
+                  Swsk_Key[i].LongPressCnt = 0;
             }
             /* key press Time >= 1s */
             else if(( Swsk_Key[i].LongPressNotifyFlag == 0 ) && ( Swsk_Key[i].LongPressCnt >= 10 ))

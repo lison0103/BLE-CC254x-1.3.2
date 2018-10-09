@@ -180,7 +180,7 @@ static uint8 scanRspData[] =
   0x56,   // 'V'
   0x30,   // '0' 
   0x2E,   // '.'  
-  0x31,   // '1' 
+  0x32,   // '2' 
   
 #else
   // complete name
@@ -242,7 +242,7 @@ static uint8 advertData[] =
 };
 
 // GAP GATT Attributes
-static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.1";//"Simple BLE Peripheral";
+static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.2";//"Simple BLE Peripheral";
 
 static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x03 ,
 0x00 ,0x00 ,0x00, 0x00 ,0x00 ,0x00,
@@ -575,16 +575,25 @@ uint16 SimpleBLEPeripheral_ProcessEvent( uint8 task_id, uint16 events )
     }
     else{}
     
-    // Restart timer
-    if ( SBP_PERIODIC_EVT_PERIOD )
-    {
-      //osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, SBP_PERIODIC_EVT_PERIOD );
-    }
-
-    // Perform periodic application task
-    performPeriodicTask();
 
     return (events ^ SBP_PERIODIC_EVT);
+  }
+  
+  if( events & SBP_PERIODIC_MSG_EVT )
+  {
+      if( ble_state == GAPROLE_CONNECTED )
+      {
+          // Restart timer
+          if ( SBP_PERIODIC_EVT_PERIOD )
+          {
+              osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_MSG_EVT, SBP_PERIODIC_EVT_PERIOD );
+          }
+      
+          // Perform periodic application task
+          performPeriodicTask();
+      } 
+      
+      return (events ^ SBP_PERIODIC_MSG_EVT);
   }
 
 #if defined ( PLUS_BROADCASTER )
@@ -679,9 +688,13 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
                 {
                   HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
                   osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
+                  osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_MSG_EVT);
                 }
               }    
               break;	
+            case KEY_LONG_PREES_CONTINUOUS:
+              BTSendData[8] = 0x03;
+              break;	             
             default:
               break;
 	}
@@ -830,6 +843,7 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
         #endif // (defined HAL_LCD) && (HAL_LCD == TRUE)
           HalLedBlink(HAL_LED_2,255,10,1000);
           initial_advertising_enable = TRUE;
+          osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_MSG_EVT);
           osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
           osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );          
       }
@@ -844,6 +858,7 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           HalLedBlink(HAL_LED_1,1,3,3100);
           osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
           osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 3100 );
+          osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_MSG_EVT, SBP_PERIODIC_EVT_PERIOD );
       }
       break;
 
@@ -856,6 +871,7 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           HalLedSet( (HAL_LED_1 | HAL_LED_2), HAL_LED_MODE_OFF );
           initial_advertising_enable = FALSE;
           osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
+          osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_MSG_EVT);
           for( i = 0; i < SWSK_KEY_NUM; i++ )
           {
                 FRM_Counter[i] = 0;
@@ -919,22 +935,36 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
  */
 static void performPeriodicTask( void )
 {
-  uint8 valueToCopy;
-  uint8 stat;
-
-  // Call to retrieve the value of the third characteristic in the profile
-  stat = SimpleProfile_GetParameter( SIMPLEPROFILE_CHAR3, &valueToCopy);
-
-  if( stat == SUCCESS )
-  {
-    /*
-     * Call to set that value of the fourth characteristic in the profile. Note
-     * that if notifications of the fourth characteristic have been enabled by
-     * a GATT client device, then a notification will be sent every time this
-     * function is called.
-     */
-    SimpleProfile_SetParameter( SIMPLEPROFILE_CHAR4, sizeof(uint8), &valueToCopy);
-  }
+    uint16 crc;
+    uint8 i;
+    
+    if( ble_state == GAPROLE_CONNECTED )
+    {
+        for( i = 0; i < SK_SEND_DATA_LEN; i++ )
+        {
+            BTSendData[i] = 0;
+        }
+          
+        /* start byte */
+        BTSendData[0] = 0xAA;
+        /* dest addr */
+        BTSendData[1] = 0x03;
+        /* source addr */
+        BTSendData[2] = 0x02;
+        /* length */
+        BTSendData[3] = 0x00;
+        BTSendData[4] = 0x09;
+        /* function num */
+        BTSendData[5] = 0x00;
+        BTSendData[6] = 0x00;
+        
+        // send 1 times, no respone
+        crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-8);
+        BTSendData[SK_SEND_DATA_LEN-8] = (crc >> 8)&0xff; 
+        BTSendData[SK_SEND_DATA_LEN-7] = (crc)&0xff;
+    
+	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
+    }
 }
 
 /*********************************************************************

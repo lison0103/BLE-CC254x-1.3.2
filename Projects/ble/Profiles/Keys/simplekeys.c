@@ -53,7 +53,9 @@
 
 #include "crc16.h"
 
-
+#ifdef DEBUG_PRINT
+#include "hal_uart.h"
+#endif
 /*********************************************************************
  * MACROS
  */
@@ -466,11 +468,13 @@ static bStatus_t sk_WriteAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
         break;
 
       case SK_AUTHENTICATION_UUID:
-
+      {
+        debug_printf("ReceiveData\r\n");
+        
         if( len == SK_AUTHENTICATION_DATA_LEN )
         {
 	    VOID osal_memcpy( pAttr->pValue, pValue, SK_AUTHENTICATION_DATA_LEN );
-
+            
             crc = Crc16Calculate(AuthenticationData,SK_AUTHENTICATION_DATA_LEN);
             if(!crc)
             {
@@ -483,10 +487,10 @@ static bStatus_t sk_WriteAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
     
                 VOID osal_memcpy( KeyPressData, pAttr->pValue, SK_SEND_DATA_LEN );
                 SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, KeyPressData );
-            }
+            } 
         }    
         break;        
-       
+      }
       default:
         // Should never get here!
         status = ATT_ERR_ATTR_NOT_FOUND;

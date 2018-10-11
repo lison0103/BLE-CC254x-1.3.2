@@ -50,6 +50,9 @@
 #include "hal_led.h"
 #include "hal_key.h"
 #include "hal_lcd.h"
+#ifdef DEBUG_PRINT
+#include "hal_uart.h"
+#endif
 
 #include "gatt.h"
 
@@ -180,7 +183,7 @@ static uint8 scanRspData[] =
   0x56,   // 'V'
   0x30,   // '0' 
   0x2E,   // '.'  
-  0x32,   // '2' 
+  0x33,   // '3' 
   
 #else
   // complete name
@@ -242,7 +245,7 @@ static uint8 advertData[] =
 };
 
 // GAP GATT Attributes
-static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.2";//"Simple BLE Peripheral";
+static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.3";//"Simple BLE Peripheral";
 
 static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x03 ,
 0x00 ,0x00 ,0x00, 0x00 ,0x00 ,0x00,
@@ -698,6 +701,8 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
             default:
               break;
 	}
+        
+        
 
 
     if( ble_state == GAPROLE_CONNECTED )
@@ -765,6 +770,26 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
     
 	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
     }
+    else
+    {
+        switch(keys & 0x07 )
+        {
+            case HAL_KEY_SW_1:
+              BTSendData[7] = 0x01;
+              break;
+            case HAL_KEY_SW_2:
+              BTSendData[7] = 0x02;
+              break;      
+            case HAL_KEY_SW_3:   
+              BTSendData[7] = 0x03;
+              break;  
+            default:
+              break;
+        }    
+    }
+    
+    debug_printf("KEY=%d,KEY_EVENT=%d\r\n",BTSendData[7],BTSendData[8]);
+    
  /*   
     BTSendData[9] = FRM_Counter[0x01]++;
     crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
@@ -845,7 +870,9 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           initial_advertising_enable = TRUE;
           osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_MSG_EVT);
           osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
-          osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );          
+          osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 500 );    
+          
+          debug_printf("Advertising\r\n");
       }
       break;
 
@@ -859,6 +886,7 @@ static void peripheralStateNotificationCB( gaprole_States_t newState )
           osal_stop_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT);
           osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, 3100 );
           osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_MSG_EVT, SBP_PERIODIC_EVT_PERIOD );
+          debug_printf("Connected\r\n");
       }
       break;
 
@@ -964,6 +992,8 @@ static void performPeriodicTask( void )
         BTSendData[SK_SEND_DATA_LEN-7] = (crc)&0xff;
     
 	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
+        
+        debug_printf("Heart Packet\r\n");
     }
 }
 

@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -49,6 +49,11 @@
 #if defined POWER_SAVING
 #include "OSAL.h"
 #include "OSAL_PwrMgr.h"
+#endif
+
+#ifdef DEBUG_PRINT
+#include <stdarg.h>
+#include <stdio.h>
 #endif
 
 /*********************************************************************
@@ -372,3 +377,96 @@ void HalUARTIsrDMA(void)
 
 /******************************************************************************
 ******************************************************************************/
+
+
+/****************************************************************************
+Ãû    ³Æ: InitUart()
+¹¦    ÄÜ: ´®¿Ú³õÊ¼»¯º¯Êý
+Èë¿Ú²ÎÊý: ÎÞ
+³ö¿Ú²ÎÊý: ÎÞ
+****************************************************************************/
+void InitUart(void)
+{ 
+    PERCFG |= BV(0);
+    P2DIR &= ~(BV(7) | BV(6));
+    P2SEL |= BV(6) | BV(3);
+    P1SEL |= BV(4) | BV(5);//ÅäÖÃP0.2ºÍP0.3ÎªÍâÉè£¬·ÇGPIO
+    U0CSR |= BV(7); //ÅäÖÃµ±Ç°ÎªUART£¬·ÇSPI
+    U0GCR |= 11; //¸ù¾ÝÉÏÊö²¨ÌØÂÊÉèÖÃ±í¸ñÉèÖÃ115200²¨ÌØÂÊ
+    U0BAUD |= 216;// ¸ù¾ÝÉÏÊö²¨ÌØÂÊÉèÖÃ±í¸ñÉèÖÃ115200²¨ÌØÂÊ
+    UTX0IF = 0;//Î»¼Ä´æÆ÷£¬Ö±½Ó²Ù×÷£¬Çå³ýÖÐ¶Ï±êÖ¾
+
+    //U0CSR |= BV(6);//ÔÊÐí½ÓÊÕÊý¾Ý
+    //IEN0 |= BV(2);//´ò¿ª½ÓÊÕÖÐ¶Ï
+    EA=1;//´ò¿ª×ÜÖÐ¶Ï
+
+
+}
+
+/****************************************************************************
+Ãû    ³Æ: UnInitUart()
+¹¦    ÄÜ: ´®¿Ú³õÊ¼»¯º¯Êý
+Èë¿Ú²ÎÊý: ÎÞ
+³ö¿Ú²ÎÊý: ÎÞ
+****************************************************************************/
+void UnInitUart(void)
+{ 
+    PERCFG &= ~BV(0);
+    //P2DIR &= ~(BV(7) | BV(6));
+    P2SEL &= ~(BV(6) | BV(3));
+    //P1SEL &= ~(BV(4) | BV(5));//ÅäÖÃP0.2ºÍP0.3ÎªÍâÉè£¬·ÇGPIO
+    
+    U0CSR &= ~BV(7); //ÅäÖÃµ±Ç°ÎªUART£¬·ÇSPI
+    U0GCR |= 11; //¸ù¾ÝÉÏÊö²¨ÌØÂÊÉèÖÃ±í¸ñÉèÖÃ115200²¨ÌØÂÊ
+    U0BAUD |= 216;// ¸ù¾ÝÉÏÊö²¨ÌØÂÊÉèÖÃ±í¸ñÉèÖÃ115200²¨ÌØÂÊ
+    UTX0IF = 0;//Î»¼Ä´æÆ÷£¬Ö±½Ó²Ù×÷£¬Çå³ýÖÐ¶Ï±êÖ¾
+
+    //U0CSR |= BV(6);//ÔÊÐí½ÓÊÕÊý¾Ý
+    //IEN0 |= BV(2);//´ò¿ª½ÓÊÕÖÐ¶Ï
+    EA=0;//´ò¿ª×ÜÖÐ¶Ï
+
+
+}
+
+
+/****************************************************************************
+Ãû    ³Æ: UartSendString()
+¹¦    ÄÜ: ´®¿Ú·¢ËÍº¯Êý
+Èë¿Ú²ÎÊý: Data:·¢ËÍ»º³åÇø   len:·¢ËÍ³¤¶È
+³ö¿Ú²ÎÊý: ÎÞ
+****************************************************************************/
+void UartSendString(uint8 *Data, uint16 len)
+{
+    uint16 i;
+    
+    InitUart();
+    
+    for(i=0; i<len; i++)
+    {
+        U0DBUF = *Data++;
+        while(UTX0IF == 0);
+        UTX0IF = 0;
+    }
+    
+    UnInitUart();
+}
+
+/********************************************
+*****¸ñÊ½»¯Êä³öº¯Êý£¬¿É±ä²ÎÊý***************
+********************************************/
+void Uart_PrintValue(const char* fmt,...)
+{
+#ifdef DEBUG_PRINT
+	va_list ap;
+	uint8 buffer[100];
+	uint16 len;
+	
+	va_start(ap,fmt);
+	len = vsprintf((char *)buffer,fmt,ap);
+        //len += 1;
+	va_end(ap);
+	UartSendString(buffer,len);
+#else
+	return;
+#endif
+}

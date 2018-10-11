@@ -1334,6 +1334,7 @@
           <state>CC2540_MINIDK</state>
           <state>BLINK_LEDS</state>
           <state>SWSK_CNT_BLE</state>
+          <state>DEBUG_PRINT</state>
         </option>
         <option>
           <name>CCPreprocFile</name>

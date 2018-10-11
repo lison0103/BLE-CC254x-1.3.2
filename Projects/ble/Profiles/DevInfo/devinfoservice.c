@@ -167,7 +167,7 @@ static const uint8 devInfoHardwareRev[] = "Hardware Revision";
 
 // Software Revision String characteristic
 static uint8 devInfoSoftwareRevProps = GATT_PROP_READ;
-static const uint8 devInfoSoftwareRev[] = "SWSK-Cnt-BLE-V0.2";
+static const uint8 devInfoSoftwareRev[] = "SWSK-Cnt-BLE-V0.3";
 
 // Manufacturer Name String characteristic
 static uint8 devInfoMfrNameProps = GATT_PROP_READ;

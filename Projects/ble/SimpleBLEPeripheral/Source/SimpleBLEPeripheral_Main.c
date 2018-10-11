@@ -46,6 +46,7 @@
 #include "hal_timer.h"
 #include "hal_drivers.h"
 #include "hal_led.h"
+#include "hal_uart.h"
 
 /* OSAL */
 #include "OSAL.h"

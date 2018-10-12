@@ -53,9 +53,7 @@
 
 #include "crc16.h"
 
-#ifdef DEBUG_PRINT
-#include "hal_uart.h"
-#endif
+#include "npi.h"
 /*********************************************************************
  * MACROS
  */

@@ -25,7 +25,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -47,6 +47,13 @@
 #include "hal_types.h"
 #include "hal_board.h"
 #include "npi.h"
+
+#include "OSAL.h"  
+
+#ifdef DEBUG_PRINT
+#include <stdarg.h>
+#include <stdio.h>
+#endif
 
 /*******************************************************************************
  * MACROS
@@ -223,6 +230,26 @@ uint16 NPI_GetMaxTxBufSize( void )
   return( NPI_UART_TX_BUF_SIZE );
 }
 
+void NPI_PrintString(uint8 *str)  
+{  
+    NPI_WriteTransport(str, osal_strlen((char*)str));  
+}  
 
+void Uart_PrintValue(const char* fmt,...)
+{
+#ifdef DEBUG_PRINT
+	va_list ap;
+	uint8 buffer[100];
+	uint16 len;
+	
+	va_start(ap,fmt);
+	len = vsprintf((char *)buffer,fmt,ap);
+        //len += 1;
+	va_end(ap);
+	NPI_WriteTransport(buffer,len);
+#else
+	return;
+#endif
+}
 /*******************************************************************************
  ******************************************************************************/

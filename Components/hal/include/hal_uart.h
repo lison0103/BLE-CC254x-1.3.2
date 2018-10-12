@@ -225,12 +225,13 @@ extern void HalUARTSuspend(void);
  */
 extern void HalUARTResume(void);
 
+#if 0
 /********************************************
 *****格式化输出函数，可变参数*****
 ********************************************/
 extern void Uart_PrintValue(const char* fmt,...);
 #define debug_printf Uart_PrintValue
-
+#endif
 
 
 /***************************************************************************************************

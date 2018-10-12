@@ -25,7 +25,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -74,7 +74,7 @@ extern "C"
 #endif
 
 #if !defined( NPI_UART_FC )
-#define NPI_UART_FC                    TRUE
+#define NPI_UART_FC                    FALSE//TRUE
 #endif // !NPI_UART_FC
 
 #define NPI_UART_FC_THRESHOLD          48
@@ -115,6 +115,11 @@ extern uint16 NPI_WriteTransport( uint8 *, uint16 );
 extern uint16 NPI_RxBufLen( void );
 extern uint16 NPI_GetMaxRxBufSize( void );
 extern uint16 NPI_GetMaxTxBufSize( void );
+
+//extern void NPI_PrintString(uint8 *str);  
+//extern void NPI_PrintValue(char *title, uint16 value, uint8 format); 
+extern void Uart_PrintValue(const char* fmt,...);
+#define debug_printf Uart_PrintValue
 
 /*******************************************************************************
 */

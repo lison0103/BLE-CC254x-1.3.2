@@ -84,6 +84,8 @@
 
 #include "crc16.h"
 
+#include "npi.h"
+
 /*********************************************************************
  * MACROS
  */
@@ -183,7 +185,7 @@ static uint8 scanRspData[] =
   0x56,   // 'V'
   0x30,   // '0' 
   0x2E,   // '.'  
-  0x33,   // '3' 
+  0x34,   // '4' 
   
 #else
   // complete name
@@ -245,7 +247,7 @@ static uint8 advertData[] =
 };
 
 // GAP GATT Attributes
-static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.3";//"Simple BLE Peripheral";
+static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.4";//"Simple BLE Peripheral";
 
 static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x03 ,
 0x00 ,0x00 ,0x00, 0x00 ,0x00 ,0x00,
@@ -257,7 +259,7 @@ uint8 initial_advertising_enable = TRUE;
 
 uint8 ble_state = 0;
 
-
+static void NpiSerialCallback( uint8 port, uint8 events );   //串口回调  
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -513,8 +515,13 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   // Setup a delayed profile startup
   osal_set_event( simpleBLEPeripheral_TaskID, SBP_START_DEVICE_EVT );
 
+    
   //osal_start_timerEx( simpleBLEPeripheral_TaskID, SBP_PERIODIC_EVT, SBP_PERIODIC_EVT_PERIOD );
+  
+  P1SEL |= BV(4) | BV(5);
+  NPI_InitTransport(NpiSerialCallback);
 
+  debug_printf("SWSK-Cnt-BLE-V0.4 INIT\r\n");   
 }
 
 /*********************************************************************
@@ -788,8 +795,10 @@ static void simpleBLEPeripheral_HandleKeys( uint8 shift, uint8 keys )
         }    
     }
     
-    debug_printf("KEY=%d,KEY_EVENT=%d\r\n",BTSendData[7],BTSendData[8]);
-    
+    //if( !( keys & KEY_LONG_PREES_CONTINUOUS ) )
+    {
+        debug_printf("KEY=%d,EVT=%d\r\n",BTSendData[7],BTSendData[8]);
+    }
  /*   
     BTSendData[9] = FRM_Counter[0x01]++;
     crc = Crc16Calculate(BTSendData,SK_SEND_DATA_LEN-2);
@@ -993,7 +1002,7 @@ static void performPeriodicTask( void )
     
 	SK_SetParameter( SK_KEY_ATTR, SK_SEND_DATA_LEN, BTSendData );
         
-        debug_printf("Heart Packet\r\n");
+        debug_printf("Heart\r\n");
     }
 }
 
@@ -1128,6 +1137,39 @@ static void ProcessPairStateCB( uint16 connHandle, uint8 state, uint8 status )
     }
   }
 
+}
+
+static void NpiSerialCallback( uint8 port, uint8 events ) 
+{
+    (void)port;//加个 (void)，是未了避免编译告警，明确告诉缓冲区不用理会这个变量  
+  
+    if (events & (HAL_UART_RX_TIMEOUT | HAL_UART_RX_FULL))   //串口有数据  
+    {  
+        uint8 numBytes = 0;  
+  
+        numBytes = NPI_RxBufLen();           //读出串口缓冲区有多少字节  
+          
+        if(numBytes == 0)  
+        {  
+            return;  
+        }  
+        else  
+        {  
+            //申请缓冲区buffer  
+            uint8 *buffer = osal_mem_alloc(numBytes);  
+            if(buffer)  
+            {  
+                //读取读取串口缓冲区数据，释放串口数据     
+                NPI_ReadTransport(buffer,numBytes);     
+  
+                //把收到的数据发送到串口-实现回环   
+                NPI_WriteTransport(buffer, numBytes);    
+  
+                //释放申请的缓冲区  
+                osal_mem_free(buffer);  
+            }  
+        }  
+    }  
 }
 /*********************************************************************
 *********************************************************************/

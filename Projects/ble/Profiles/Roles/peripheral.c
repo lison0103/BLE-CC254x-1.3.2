@@ -53,6 +53,8 @@
 #include "peripheral.h"
 #include "gapbondmgr.h"
 
+#include "npi.h"
+
 /*********************************************************************
  * MACROS
  */
@@ -1053,6 +1055,8 @@ static void gapRole_ProcessGAPMsg( gapEventHdr_t *pMsg )
         // Cancel all connection parameter update timers (if any active)
         VOID osal_stop_timerEx( gapRole_TaskID, START_CONN_UPDATE_EVT );
         VOID osal_stop_timerEx( gapRole_TaskID, CONN_PARAM_TIMEOUT_EVT );
+
+        debug_printf("Disconnect Reason Codes:0x%02x\r\n",pPkt->reason);
           
         // Go to WAITING state, and then start advertising
         if( pPkt->reason == LL_SUPERVISION_TIMEOUT_TERM )

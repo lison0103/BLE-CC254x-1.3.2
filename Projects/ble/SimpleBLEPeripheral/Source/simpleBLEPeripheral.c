@@ -185,7 +185,7 @@ static uint8 scanRspData[] =
   0x56,   // 'V'
   0x30,   // '0' 
   0x2E,   // '.'  
-  0x34,   // '4' 
+  0x35,   // '5' 
   
 #else
   // complete name
@@ -247,7 +247,7 @@ static uint8 advertData[] =
 };
 
 // GAP GATT Attributes
-static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.4";//"Simple BLE Peripheral";
+static uint8 attDeviceName[GAP_DEVICE_NAME_LEN] = "SWSK-Cnt-BLE-V0.5";//"Simple BLE Peripheral";
 
 static uint8 BTSendData[SK_SEND_DATA_LEN] = { 0xAA ,0x03 ,0x02 ,0x00 ,0x0C ,0x00 ,0x03 ,
 0x00 ,0x00 ,0x00, 0x00 ,0x00 ,0x00,
@@ -337,6 +337,9 @@ static simpleProfileCBs_t simpleBLEPeripheral_SimpleProfileCBs =
 void SimpleBLEPeripheral_Init( uint8 task_id )
 {
   simpleBLEPeripheral_TaskID = task_id;
+  
+  /* CC2541 tx power max is 0 DBM */
+  HCI_EXT_SetTxPowerCmd(LL_EXT_TX_POWER_0_DBM);
 
   // Setup the GAP
   VOID GAP_SetParamValue( TGAP_CONN_PAUSE_PERIPHERAL, DEFAULT_CONN_PAUSE_PERIPHERAL );
@@ -521,7 +524,7 @@ void SimpleBLEPeripheral_Init( uint8 task_id )
   P1SEL |= BV(4) | BV(5);
   NPI_InitTransport(NpiSerialCallback);
 
-  debug_printf("SWSK-Cnt-BLE-V0.4 INIT\r\n");   
+  debug_printf("SWSK-Cnt-BLE-V0.5 INIT\r\n");   
 }
 
 /*********************************************************************
